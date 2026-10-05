@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGMS – Internal Login</title>
+    <meta name="description" content="TGMS Internal Employee Login">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body.login-page {
+            background-color: var(--bg);
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+        }
+
+        /* Suble textile pattern overlay */
+        body.login-page::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(45deg, rgba(0,0,0,0.02) 25%, transparent 25%),
+                linear-gradient(135deg, rgba(0,0,0,0.02) 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, rgba(0,0,0,0.02) 75%),
+                linear-gradient(135deg, transparent 75%, rgba(0,0,0,0.02) 75%);
+            background-size: 8px 8px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .login-layout {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .login-left {
+            flex: 1.2;
+            background-image: linear-gradient(rgba(23, 35, 45, 0.75), rgba(23, 35, 45, 0.95)), url('/images/fabric-rolls.png');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .login-left::after {
+            content: '';
+            position: absolute;
+            right: 0; top: 0; bottom: 0;
+            width: 4px;
+            background: var(--primary); /* subtle red connection strip */
+        }
+        
+        .login-right {
+            flex: 1;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 20;
+        }
+
+        .login-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 420px;
+            padding: 48px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .login-card .logo {
+            font-size: 46px;
+            font-weight: 800;
+            color: var(--primary); /* Navy for branding */
+            margin-bottom: 4px;
+            letter-spacing: -1.5px;
+            line-height:1;
+        }
+
+        .login-card .title {
+            color: var(--dark);
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 36px;
+        }
+
+        .login-card h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 24px;
+            padding-bottom:16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .login-form {
+            text-align: left;
+        }
+
+        .login-form label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--dark);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+            font-size: 14px;
+            background-color: var(--white);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .login-form input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(14, 47, 118, 0.1);
+        }
+
+        .login-form button {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .login-form button:hover {
+            background: var(--primary-dark);
+        }
+        
+        .login-form button:active {
+            transform: translateY(1px);
+        }
+
+        .login-footer {
+            margin-top: 32px;
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        /* Responsive Layout */
+        @media (max-width: 900px) {
+            .login-left { display: none; }
+            .login-right { flex: 1; padding: 20px; }
+        }
+    </style>
+</head>
+<body class="login-page">
+
+    <div class="login-layout">
+        <!-- Left Side: Subtle Textile Image -->
+        <div class="login-left" aria-hidden="true"></div>
+
+        <!-- Right Side: Login Card -->
+        <div class="login-right">
+            <div class="login-card">
+                <div class="logo">TGMS</div>
+                <div class="title">Textile &amp; Garment<br>Management System</div>
+
+                <h2>Employee Login</h2>
+
+                <div id="loginAlert" class="alert error hidden" role="alert" style="text-align:left; margin-bottom:16px;"></div>
+
+                <form id="internalLoginForm" class="login-form" novalidate>
+                    <div>
+                        <label for="username">Username</label>
+                        <input type="text" id="username" required autocomplete="username" placeholder="Enter your username">
+                    </div>
+                    <div>
+                        <label for="password">Password</label>
+                        <input type="password" id="password" required autocomplete="current-password" placeholder="Enter your password">
+                    </div>
+
+                    <button type="submit" id="loginBtn">
+                        <i class="fas fa-sign-in-alt" style="margin-right:6px;"></i> SIGN IN
+                    </button>
+                </form>
+
+                <div class="login-footer">
+                    <i class="fas fa-lock" style="margin-right:4px;"></i> Internal Company System
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="/js/api.js"></script>
+<script src="/js/login.js"></script>
+
+</body>
+</html>
