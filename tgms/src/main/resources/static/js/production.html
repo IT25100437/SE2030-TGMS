@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGMS – Production Management</title>
+    <meta name="description" content="Manage work orders, assign production lines, track manufacturing stages and monitor daily output.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <script>window.ACTIVE_MODULE = 'production';</script>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar" role="banner">
+    <div class="topbar-brand">
+        <button class="hamburger" id="sidebarToggle" aria-label="Toggle sidebar" style="display:flex; margin-right:4px;">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="topbar-logo" aria-hidden="true">TG</div>
+        <div class="topbar-title">
+            <span>TGMS</span>
+            <span>Textile &amp; Garment Management</span>
+        </div>
+    </div>
+    <div class="user-info">
+        <div class="user-avatar" id="userAvatar" aria-hidden="true">U</div>
+        <div class="user-details">
+            <span class="user-name" id="userLabel">Loading...</span>
+            <span class="user-role" id="userRoleLabel"></span>
+        </div>
+        <button class="logout-btn" onclick="logout()" aria-label="Log out">
+            <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+            Log Out
+        </button>
+    </div>
+</header>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar" role="navigation" aria-label="Module navigation">
+        <div class="sidebar-section-label">Navigation</div>
+    </nav>
+    <div id="sidebarOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:299;"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+
+        <div class="page-header">
+            <div class="page-label">Production Management</div>
+            <h2>Work Orders &amp; Production Stages</h2>
+            <p class="page-desc">Create work orders from confirmed customer orders, assign production lines, track manufacturing stages and view daily output.</p>
+        </div>
+
+        <!-- Bottleneck Banner -->
+        <div id="bottleneckBanner" class="alert warn hidden" role="alert"></div>
+
+        <div id="pageAlert" class="alert hidden" role="alert"></div>
+
+        <!-- Create Work Order -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-plus-circle" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Create Work Order from a Confirmed Order</h3>
+            </div>
+            <form id="workOrderForm" novalidate>
+                <div class="form-grid">
+                    <div>
+                        <label for="wo_order">Confirmed Order</label>
+                        <select id="wo_order" required></select>
+                    </div>
+                    <div>
+                        <label for="wo_line">Assigned Production Line / Team</label>
+                        <input type="text" id="wo_line" required placeholder="e.g. Line A">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="primary">
+                        <i class="fas fa-industry" aria-hidden="true"></i>
+                        Create Work Order
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Daily Output -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-calendar-day" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Daily Output Summary</h3>
+            </div>
+            <div class="filters">
+                <div>
+                    <label for="output_date">Date</label>
+                    <input type="date" id="output_date">
+                </div>
+                <div style="display:flex; align-items:flex-end;">
+                    <button class="primary" onclick="loadOutputSummary()">
+                        <i class="fas fa-eye" aria-hidden="true"></i>
+                        View Summary
+                    </button>
+                </div>
+            </div>
+            <div id="outputSummaryBody" class="small-text" style="padding:8px 0; color:var(--muted);">
+                Pick a date and click &quot;View Summary&quot;.
+            </div>
+        </div>
+
+        <!-- Work Order List -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-tasks" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Work Orders</h3>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Order #</th>
+                            <th>Line / Team</th>
+                            <th>Stage</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="workOrderTableBody">
+                        <tr><td colspan="6" class="small-text" style="padding:20px;">Loading work orders…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Stage History Panel -->
+        <div class="card hidden" id="stageDetailPanel">
+            <div class="card-header">
+                <h3><i class="fas fa-history" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Stage History — Work Order #<span id="detailWorkOrderId"></span></h3>
+                <button class="link-btn" onclick="closeStageDetail()">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    Back to work order list
+                </button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Stage</th>
+                            <th>Started</th>
+                            <th>Ended</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stageHistoryBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script>initLayout();</script>
+<script src="/js/production.js"></script>
+
+</body>
+</html>
