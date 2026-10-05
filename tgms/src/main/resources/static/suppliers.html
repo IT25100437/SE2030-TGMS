@@ -76,8 +76,8 @@
                         <input type="text" id="s_name" required autocomplete="off" placeholder="e.g. Acme Textiles Ltd.">
                     </div>
                     <div>
-                        <label for="s_contact">Contact (phone / email)</label>
-                        <input type="text" id="s_contact" required autocomplete="off" placeholder="e.g. info@supplier.com">
+                        <label for="s_contact">Contact (Phone Number)</label>
+                        <input type="tel" id="s_contact" required autocomplete="off" inputmode="numeric" maxlength="10" pattern="0[0-9]{9}" placeholder="e.g. 0771234567">
                     </div>
                     <div>
                         <label for="s_category">Material Category</label>
@@ -107,8 +107,8 @@
                         <input type="text" id="editSupplierName" required autocomplete="off">
                     </div>
                     <div>
-                        <label for="editSupplierContact">Contact (phone / email)</label>
-                        <input type="text" id="editSupplierContact" required autocomplete="off">
+                        <label for="editSupplierContact">Contact (Phone Number)</label>
+                        <input type="tel" id="editSupplierContact" required autocomplete="off" inputmode="numeric" maxlength="10" pattern="0[0-9]{9}">
                     </div>
                     <div>
                         <label for="editSupplierCategory">Material Category</label>

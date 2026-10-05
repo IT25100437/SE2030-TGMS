@@ -43,8 +43,9 @@ function supplierRules(prefix) {
 
     return [
         { el: ids.name,     key: 'name',     label: 'Supplier name',     required: true, maxLength: 150 },
-        { el: ids.contact,  key: 'contact',  label: 'Contact',           required: true, type: 'contact',
-          requiredMessage: 'Contact (phone number or email address) is required.' },
+        { el: ids.contact,  key: 'contact',  label: 'Contact (Phone Number)', required: true, type: 'phone',
+          message: 'Please enter a valid 10-digit phone number (e.g. 0771234567).',
+          custom: value => /^0\d{9}$/.test(value) ? null : 'Phone number must contain exactly 10 digits and start with 0.' },
         { el: ids.category, key: 'materialCategory', label: 'Material category', required: true, maxLength: 100 }
     ];
 }
