@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGMS – Reports &amp; Analytics</title>
+    <meta name="description" content="Generate management reports, view KPI dashboards, schedule recurring reports and export to PDF or Excel.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/reports.css">
+    <script>window.ACTIVE_MODULE = 'reports';</script>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar" role="banner">
+    <div class="topbar-brand">
+        <button class="hamburger" id="sidebarToggle" aria-label="Toggle sidebar" style="display:flex; margin-right:4px;">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="topbar-logo" aria-hidden="true">TG</div>
+        <div class="topbar-title">
+            <span>TGMS</span>
+            <span>Textile &amp; Garment Management</span>
+        </div>
+    </div>
+    <div class="user-info">
+        <div class="user-avatar" id="userAvatar" aria-hidden="true">U</div>
+        <div class="user-details">
+            <span class="user-name" id="userLabel">Loading...</span>
+            <span class="user-role" id="userRoleLabel"></span>
+        </div>
+        <button class="logout-btn" onclick="logout()" aria-label="Log out">
+            <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+            Log Out
+        </button>
+    </div>
+</header>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar" role="navigation" aria-label="Module navigation">
+        <div class="sidebar-section-label">Navigation</div>
+    </nav>
+    <div id="sidebarOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:299;"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+
+        <div class="page-header">
+            <div class="page-label">Reports &amp; Analytics</div>
+            <h2>Business Intelligence &amp; Reports</h2>
+            <p class="page-desc">Generate live management reports, view KPI dashboards, schedule recurring reports and export to PDF or Excel.</p>
+        </div>
+
+        <div id="pageAlert" class="alert hidden" role="alert"></div>
+
+        <!-- KPI Grid -->
+        <section class="card" aria-label="Dashboard KPIs">
+            <div class="card-header">
+                <h3><i class="fas fa-tachometer-alt" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Dashboard KPIs</h3>
+            </div>
+            <div id="kpiGrid" class="kpi-grid"></div>
+        </section>
+
+        <!-- Generate Report -->
+        <section class="card" aria-label="Generate Report">
+            <div class="section-head">
+                <div>
+                    <h3><i class="fas fa-file-chart-line" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Generate Management Report</h3>
+                    <p class="small-text">Uses live data from the TGMS database.</p>
+                </div>
+                <div class="button-row">
+                    <button class="primary" id="generateBtn">
+                        <i class="fas fa-play" aria-hidden="true"></i>
+                        Generate
+                    </button>
+                    <button class="secondary" id="pinBtn">
+                        <i class="fas fa-thumbtack" aria-hidden="true"></i>
+                        Pin Report
+                    </button>
+                </div>
+            </div>
+
+            <div class="filters">
+                <div>
+                    <label for="reportType">Report Type</label>
+                    <select id="reportType">
+                        <option value="ORDERS">Orders / Sales</option>
+                        <option value="INVENTORY">Inventory</option>
+                        <option value="PRODUCTION">Production</option>
+                        <option value="EMPLOYEES">Employees</option>
+                        <option value="SUPPLIERS">Suppliers</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="reportActions" class="button-row hidden" style="margin-top:12px;">
+                <button class="secondary" id="excelBtn">
+                    <i class="fas fa-file-excel" aria-hidden="true"></i>
+                    Export Excel
+                </button>
+                <button class="secondary" id="pdfBtn">
+                    <i class="fas fa-file-pdf" aria-hidden="true"></i>
+                    Export PDF
+                </button>
+            </div>
+
+            <div class="table-wrap">
+                <table id="reportTable"><thead></thead><tbody></tbody></table>
+            </div>
+        </section>
+
+        <!-- Scheduled Reports -->
+        <section class="card" aria-label="Scheduled Reports">
+            <div class="section-head">
+                <div>
+                    <h3><i class="fas fa-clock" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Scheduled Reports</h3>
+                    <p class="small-text">Create, view, update and delete recurring report schedules.</p>
+                </div>
+                <button class="primary" id="newScheduleBtn">
+                    <i class="fas fa-plus" aria-hidden="true"></i>
+                    New Schedule
+                </button>
+            </div>
+
+            <form id="scheduleForm" class="schedule-form hidden" novalidate>
+                <input type="hidden" id="scheduleId">
+                <div>
+                    <label for="scheduleType">Report Type</label>
+                    <select id="scheduleType">
+                        <option value="ORDERS">Orders / Sales</option>
+                        <option value="INVENTORY">Inventory</option>
+                        <option value="PRODUCTION">Production</option>
+                        <option value="EMPLOYEES">Employees</option>
+                        <option value="SUPPLIERS">Suppliers</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="frequency">Frequency</label>
+                    <select id="frequency">
+                        <option value="DAILY">Daily</option>
+                        <option value="WEEKLY">Weekly</option>
+                        <option value="MONTHLY">Monthly</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="scheduledTime">Scheduled Time</label>
+                    <input type="datetime-local" id="scheduledTime" required>
+                </div>
+                <div>
+                    <label for="enabled">Status</label>
+                    <select id="enabled">
+                        <option value="true">Enabled</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button class="primary" type="submit">
+                        <i class="fas fa-save" aria-hidden="true"></i>
+                        Save Schedule
+                    </button>
+                    <button class="secondary" type="button" id="cancelSchedule">Cancel</button>
+                </div>
+            </form>
+
+            <div class="table-wrap">
+                <table id="scheduleTable">
+                    <thead>
+                        <tr>
+                            <th>Report</th>
+                            <th>Frequency</th>
+                            <th>Scheduled Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Pinned Reports -->
+        <section class="card" aria-label="Pinned Reports">
+            <div class="section-head">
+                <div>
+                    <h3><i class="fas fa-thumbtack" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Pinned Reports</h3>
+                    <p class="small-text">Quick access to frequently used reports.</p>
+                </div>
+            </div>
+            <div id="pins" class="pin-list"></div>
+        </section>
+
+    </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script>initLayout();</script>
+<script src="/js/reports.js"></script>
+
+</body>
+</html>
