@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGMS – Employee Management</title>
+    <meta name="description" content="Manage textile factory employees — registration, roles, departments, attendance and monthly summaries.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <script>window.ACTIVE_MODULE = 'employees';</script>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar" role="banner">
+    <div class="topbar-brand">
+        <button class="hamburger" id="sidebarToggle" aria-label="Toggle sidebar" style="display:flex; margin-right:4px;">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="topbar-logo" aria-hidden="true">TG</div>
+        <div class="topbar-title">
+            <span>TGMS</span>
+            <span>Textile &amp; Garment Management</span>
+        </div>
+    </div>
+    <div class="user-info">
+        <div class="user-avatar" id="userAvatar" aria-hidden="true">U</div>
+        <div class="user-details">
+            <span class="user-name" id="userLabel">Loading...</span>
+            <span class="user-role" id="userRoleLabel"></span>
+        </div>
+        <button class="logout-btn" onclick="logout()" aria-label="Log out">
+            <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+            Log Out
+        </button>
+    </div>
+</header>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar" role="navigation" aria-label="Module navigation">
+        <div class="sidebar-section-label">Navigation</div>
+    </nav>
+    <div id="sidebarOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:299;"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+
+        <div class="page-header">
+            <div class="page-label">Employee Management</div>
+            <h2>Workforce &amp; Attendance</h2>
+            <p class="page-desc">Register employees, update roles and departments, mark attendance and view monthly summaries.</p>
+        </div>
+
+        <div id="pageAlert" class="alert hidden" role="alert"></div>
+
+        <!-- Register / Edit Employee -->
+        <div class="card">
+            <div class="card-header">
+                <h3 id="employeeFormTitle">
+                    <i class="fas fa-user-plus" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>
+                    Register New Employee
+                </h3>
+            </div>
+
+            <form id="employeeForm" novalidate>
+                <input type="hidden" id="e_id">
+                <div class="form-grid">
+                    <div>
+                        <label for="e_name">Full Name</label>
+                        <input type="text" id="e_name" required placeholder="e.g. Kasun Perera">
+                    </div>
+                    <div>
+                        <label for="e_dob">Date of Birth</label>
+                        <input type="date" id="e_dob" required>
+                    </div>
+                    <div>
+                        <label for="e_department">Department</label>
+                        <input type="text" id="e_department" required placeholder="e.g. Cutting, Sewing, QC, Packing, Admin">
+                    </div>
+                    <div>
+                        <label for="e_role">Job Role / Title</label>
+                        <input type="text" id="e_role" required placeholder="e.g. Tailor, Supervisor">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="primary" id="employeeSubmitBtn">
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                        Register Employee
+                    </button>
+                    <button type="button" class="secondary hidden" id="employeeCancelEditBtn" onclick="resetEmployeeForm()">
+                        Cancel Edit
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Employee List -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-users" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Employees</h3>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeeTableBody">
+                        <tr><td colspan="6" class="small-text" style="padding:20px;">Loading employees…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Attendance Panel -->
+        <div class="card hidden" id="attendancePanel">
+            <div class="card-header">
+                <h3><i class="fas fa-calendar-check" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Attendance — <span id="attendanceEmployeeName"></span></h3>
+                <button class="link-btn" onclick="closeAttendancePanel()">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    Back to employee list
+                </button>
+            </div>
+
+            <form id="attendanceForm" novalidate>
+                <div class="form-grid">
+                    <div>
+                        <label for="a_date">Date</label>
+                        <input type="date" id="a_date" required>
+                    </div>
+                    <div>
+                        <label for="a_status">Status</label>
+                        <select id="a_status" required>
+                            <option value="PRESENT">Present</option>
+                            <option value="ABSENT">Absent</option>
+                            <option value="LATE">Late</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="primary">
+                        <i class="fas fa-check" aria-hidden="true"></i>
+                        Mark Attendance
+                    </button>
+                </div>
+            </form>
+
+            <h4 style="margin-top:24px; margin-bottom:14px;">Monthly Summary</h4>
+            <div class="filters">
+                <div>
+                    <label for="summary_year">Year</label>
+                    <input type="number" id="summary_year" value="2026" placeholder="YYYY">
+                </div>
+                <div>
+                    <label for="summary_month">Month</label>
+                    <input type="number" id="summary_month" min="1" max="12" value="9" placeholder="1–12">
+                </div>
+                <div style="display:flex; align-items:flex-end;">
+                    <button class="primary" onclick="loadAttendanceSummary()">
+                        <i class="fas fa-eye" aria-hidden="true"></i>
+                        View Summary
+                    </button>
+                </div>
+            </div>
+            <div id="attendanceSummaryBody" class="small-text" style="padding:8px 0; color:var(--muted);">
+                Pick a year/month and click &quot;View Summary&quot;.
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script>initLayout();</script>
+<script src="/js/employees.js"></script>
+
+</body>
+</html>
