@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
+    <script>window.ACTIVE_MODULE = 'dashboard';</script>
 </head>
 <body>
 
@@ -18,7 +19,7 @@
      ================================================ -->
 <header class="topbar" role="banner">
     <div class="topbar-brand">
-        <button class="hamburger" id="sidebarToggle" aria-label="Toggle sidebar" style="display:flex; margin-right:4px;">
+        <button class="hamburger" id="sidebarToggle" aria-label="Toggle sidebar">
             <span></span><span></span><span></span>
         </button>
         <div class="topbar-logo" aria-hidden="true">TG</div>
@@ -46,71 +47,56 @@
      ================================================ -->
 <div class="layout">
 
-    <!-- SIDEBAR -->
+    <!-- SIDEBAR (rendered by /js/layout.js, role-based) -->
     <nav class="sidebar" id="sidebar" role="navigation" aria-label="Module navigation">
-        <div class="sidebar-section-label">Navigation</div>
-        <a href="/dashboard.html" class="active" aria-current="page">
-            <i class="fas fa-th-large" aria-hidden="true"></i>
-            Dashboard
-        </a>
-        <!-- Role-based links injected by dashboard.js -->
+        <!-- Navigation is rendered by the shared /js/layout.js (role-based) -->
     </nav>
 
     <!-- SIDEBAR OVERLAY for mobile -->
-    <div id="sidebarOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:299;"
-         onclick="closeSidebar()"></div>
+    <div id="sidebarOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:299;"></div>
 
     <!-- MAIN CONTENT -->
     <main class="content" id="mainContent">
-
         <!-- Welcome Card -->
         <div class="welcome-card" id="welcomeCard">
-            <p style="font-size:12px; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:1.5px; font-weight:600; margin-bottom:6px;">Dashboard</p>
+            <div class="welcome-eyebrow">Dashboard</div>
             <h2>Welcome back, <span id="welcomeName">—</span></h2>
-            <p style="font-size:14px; color:rgba(255,255,255,0.65); margin-top:4px;">Here's an overview of your management modules and system activity.</p>
+            <p class="welcome-sub" id="welcomeSub">Here's an overview of your management modules and system activity.</p>
             <div class="role-badge" id="welcomeRole"></div>
         </div>
 
-        <!-- KPI Cards -->
-        <div class="dashboard-kpi-grid" id="kpiGrid">
-            <!-- Injected by dashboard.js -->
-        </div>
+        <!-- KPI Cards (real data, injected by dashboard.js) -->
+        <section aria-label="Key figures">
+            <div class="dashboard-kpi-grid" id="kpiGrid"></div>
+        </section>
+
+        <!-- Quick Actions -->
+        <section class="card hidden" id="quickActionsCard" aria-label="Quick actions">
+            <div class="section-header">
+                <h3><i class="fas fa-bolt section-icon" aria-hidden="true"></i>Quick Actions</h3>
+            </div>
+            <div class="quick-actions" id="quickActions"></div>
+        </section>
+
+        <!-- Role-specific panels: recent activity, alerts, lists -->
+        <div id="dashboardPanels"></div>
 
         <!-- Module Links -->
-        <div class="card">
-            <div class="card-header">
-                <h3>Your Modules</h3>
+        <section class="card dashboard-section" aria-label="Your modules">
+            <div class="section-header">
+                <h3><i class="fas fa-th-large section-icon" aria-hidden="true"></i>Your Modules</h3>
             </div>
-            <div id="moduleLinks">
-                <!-- Injected by dashboard.js -->
-            </div>
-        </div>
+            <div id="moduleLinks" class="module-link-grid"></div>
+        </section>
 
     </main>
 </div>
 
-
 <script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/layout.js"></script>
+<script>initLayout();</script>
 <script src="/js/dashboard.js"></script>
-<script>
-/* Sidebar toggle for mobile */
-const sidebarToggle = document.getElementById('sidebarToggle');
-const sidebar = document.getElementById('sidebar');
-const sidebarOverlay = document.getElementById('sidebarOverlay');
-
-function openSidebar() {
-    sidebar.classList.add('open');
-    sidebarOverlay.style.display = 'block';
-}
-function closeSidebar() {
-    sidebar.classList.remove('open');
-    sidebarOverlay.style.display = 'none';
-}
-
-sidebarToggle.addEventListener('click', () => {
-    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-});
-</script>
 
 </body>
 </html>

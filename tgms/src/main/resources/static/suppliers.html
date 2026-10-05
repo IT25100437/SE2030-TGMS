@@ -14,10 +14,12 @@
 </head>
 <body>
 
-<!-- TOP BAR -->
+<!-- ================================================
+     TOP BAR
+     ================================================ -->
 <header class="topbar" role="banner">
     <div class="topbar-brand">
-        <button class="hamburger" id="sidebarToggle" aria-label="Toggle sidebar" style="display:flex; margin-right:4px;">
+        <button class="hamburger" id="sidebarToggle" aria-label="Toggle sidebar">
             <span></span><span></span><span></span>
         </button>
         <div class="topbar-logo" aria-hidden="true">TG</div>
@@ -26,6 +28,7 @@
             <span>Textile &amp; Garment Management</span>
         </div>
     </div>
+
     <div class="user-info">
         <div class="user-avatar" id="userAvatar" aria-hidden="true">U</div>
         <div class="user-details">
@@ -39,124 +42,123 @@
     </div>
 </header>
 
+<!-- ================================================
+     LAYOUT
+     ================================================ -->
 <div class="layout">
 
-    <!-- SIDEBAR -->
+    <!-- SIDEBAR (rendered by /js/layout.js, role-based) -->
     <nav class="sidebar" id="sidebar" role="navigation" aria-label="Module navigation">
-        <div class="sidebar-section-label">Navigation</div>
+        <!-- Navigation is rendered by the shared /js/layout.js (role-based) -->
     </nav>
+
+    <!-- SIDEBAR OVERLAY for mobile -->
     <div id="sidebarOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:299;"></div>
 
     <!-- MAIN CONTENT -->
-    <main class="content">
-
-        <!-- Page Header -->
+    <main class="content" id="mainContent">
         <div class="page-header">
             <div class="page-label">Supplier Management</div>
             <h2>Manage Your Supplier Network</h2>
             <p class="page-desc">Register suppliers, manage contract terms and maintain your approved supplier list.</p>
         </div>
 
-        <!-- Alert -->
-        <div id="pageAlert" class="alert hidden" role="alert"></div>
-
         <!-- Register New Supplier -->
-        <div class="card">
-            <div class="card-header">
-                <h3><i class="fas fa-plus-circle" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Register New Supplier</h3>
+        <section class="card" id="registerSupplierCard">
+            <div class="section-header">
+                <h3><i class="fas fa-plus-circle section-icon" aria-hidden="true"></i>Register New Supplier</h3>
             </div>
 
             <form id="supplierForm" novalidate>
-                <div class="form-grid">
+                <div class="form-grid cols-3">
                     <div>
                         <label for="s_name">Supplier Name</label>
-                        <input type="text" id="s_name" required placeholder="e.g. Acme Textiles Ltd.">
+                        <input type="text" id="s_name" required autocomplete="off" placeholder="e.g. Acme Textiles Ltd.">
                     </div>
                     <div>
                         <label for="s_contact">Contact (phone / email)</label>
-                        <input type="text" id="s_contact" required placeholder="e.g. info@supplier.com">
+                        <input type="text" id="s_contact" required autocomplete="off" placeholder="e.g. info@supplier.com">
                     </div>
                     <div>
                         <label for="s_category">Material Category</label>
-                        <input type="text" id="s_category" required placeholder="e.g. Cotton, Polyester, Dyes">
+                        <input type="text" id="s_category" required autocomplete="off" placeholder="e.g. Cotton, Polyester, Dyes">
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="primary" id="supplierSubmitBtn">
-                        <i class="fas fa-plus" aria-hidden="true"></i>
-                        Register Supplier
+                    <button type="submit" class="btn btn-primary" id="supplierSubmitBtn">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Register Supplier
                     </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetSupplierForm()">Reset</button>
                 </div>
             </form>
-        </div>
+        </section>
 
         <!-- Edit Supplier -->
-        <div class="card hidden" id="editSupplierPanel">
-            <div class="card-header">
-                <h3><i class="fas fa-edit" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Edit Supplier — <span id="editSupplierTitle"></span></h3>
+        <section class="card hidden" id="editSupplierPanel">
+            <div class="section-header">
+                <h3><i class="fas fa-edit section-icon" aria-hidden="true"></i>Edit Supplier — <span id="editSupplierTitle"></span></h3>
             </div>
 
             <form id="editSupplierForm" novalidate>
                 <input type="hidden" id="editSupplierId">
-                <div class="form-grid">
+                <div class="form-grid cols-3">
                     <div>
                         <label for="editSupplierName">Supplier Name</label>
-                        <input type="text" id="editSupplierName" required>
+                        <input type="text" id="editSupplierName" required autocomplete="off">
                     </div>
                     <div>
                         <label for="editSupplierContact">Contact (phone / email)</label>
-                        <input type="text" id="editSupplierContact" required>
+                        <input type="text" id="editSupplierContact" required autocomplete="off">
                     </div>
                     <div>
                         <label for="editSupplierCategory">Material Category</label>
-                        <input type="text" id="editSupplierCategory" required placeholder="e.g. Cotton, Polyester, Dyes">
+                        <input type="text" id="editSupplierCategory" required autocomplete="off" placeholder="e.g. Cotton, Polyester, Dyes">
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="primary">
-                        <i class="fas fa-save" aria-hidden="true"></i>
-                        Update Supplier
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save" aria-hidden="true"></i> Update Supplier
                     </button>
-                    <button type="button" class="secondary" onclick="cancelEditSupplier()">
-                        Cancel
-                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelEditSupplier()">Cancel</button>
                 </div>
             </form>
-        </div>
+        </section>
 
         <!-- Supplier List + Search -->
-        <div class="card">
-            <div class="card-header">
-                <h3><i class="fas fa-list" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Suppliers</h3>
-                <button class="secondary" onclick="exportSuppliers()" id="exportBtn">
-                    <i class="fas fa-download" aria-hidden="true"></i>
-                    Export CSV
-                </button>
+        <section class="card" id="supplierListCard">
+            <div class="section-header">
+                <div>
+                    <h3><i class="fas fa-list section-icon" aria-hidden="true"></i>Suppliers</h3>
+                    <div class="section-desc">Search by name or filter by material category.</div>
+                </div>
+                <div class="section-actions">
+                    <button class="btn btn-secondary" onclick="exportSuppliers(this)" id="exportBtn">
+                        <i class="fas fa-download" aria-hidden="true"></i> Export CSV
+                    </button>
+                </div>
             </div>
 
             <div class="filters">
                 <div>
                     <label for="f_name">Search by name</label>
-                    <input type="text" id="f_name" placeholder="e.g. Acme Textiles">
+                    <input type="text" id="f_name" placeholder="e.g. Acme Textiles" autocomplete="off">
                 </div>
                 <div>
                     <label for="f_category">Filter by material category</label>
-                    <input type="text" id="f_category" placeholder="e.g. Cotton">
+                    <input type="text" id="f_category" placeholder="e.g. Cotton" autocomplete="off">
                 </div>
-                <div style="display:flex; gap:8px; align-items:flex-end; flex:none;">
-                    <button class="primary" onclick="loadSuppliers()">
-                        <i class="fas fa-search" aria-hidden="true"></i>
-                        Search
+                <div class="filter-actions">
+                    <button class="btn btn-primary" onclick="loadSuppliers()">
+                        <i class="fas fa-search" aria-hidden="true"></i> Search
                     </button>
-                    <button class="secondary" onclick="clearFilters()">
-                        <i class="fas fa-times" aria-hidden="true"></i>
-                        Clear
+                    <button class="btn btn-secondary" onclick="clearFilters()">
+                        <i class="fas fa-times" aria-hidden="true"></i> Clear
                     </button>
                 </div>
             </div>
 
             <div class="table-wrap">
-                <table>
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -168,24 +170,23 @@
                         </tr>
                     </thead>
                     <tbody id="supplierTableBody">
-                        <tr><td colspan="6" class="small-text" style="padding:20px;">Loading suppliers…</td></tr>
+                        <tr class="state-row"><td colspan="6"><div class="state-block loading-state" role="status"><span class="spinner lg" aria-hidden="true"></span><span>Loading suppliers…</span></div></td></tr>
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
         <!-- Contract Terms Panel -->
-        <div class="card hidden" id="contractPanel">
-            <div class="card-header">
-                <h3><i class="fas fa-file-contract" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Contract Terms — <span id="contractSupplierName"></span></h3>
-                <button class="link-btn" onclick="closeContractPanel()">
-                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                    Back to supplier list
+        <section class="card hidden" id="contractPanel">
+            <div class="section-header">
+                <h3><i class="fas fa-file-contract section-icon" aria-hidden="true"></i>Contract Terms — <span id="contractSupplierName"></span></h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeContractPanel()">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i> Back to supplier list
                 </button>
             </div>
 
-            <div class="table-wrap" style="margin-bottom:20px;">
-                <table>
+            <div class="table-wrap">
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -199,10 +200,10 @@
                 </table>
             </div>
 
-            <h4 id="contractFormTitle" style="margin-bottom:14px;">Add Contract</h4>
+            <h4 class="section-subtitle" id="contractFormTitle">Add Contract</h4>
             <form id="contractForm" novalidate>
                 <input type="hidden" id="c_contractId">
-                <div style="margin-bottom:12px;">
+                <div class="mb-2">
                     <label for="c_terms">Terms</label>
                     <textarea id="c_terms" rows="3" required placeholder="Enter contract terms and conditions..."></textarea>
                 </div>
@@ -217,25 +218,23 @@
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="primary" id="contractSubmitBtn">
-                        <i class="fas fa-plus" aria-hidden="true"></i>
-                        Add Contract
+                    <button type="submit" class="btn btn-primary" id="contractSubmitBtn">
+                        <i class="fas fa-plus" aria-hidden="true"></i> <span id="contractSubmitLabel">Add Contract</span>
                     </button>
-                    <button type="button" class="secondary hidden" id="contractCancelEditBtn" onclick="resetContractForm()">
+                    <button type="button" class="btn btn-secondary hidden" id="contractCancelEditBtn" onclick="resetContractForm()">
                         Cancel Edit
                     </button>
                 </div>
             </form>
-        </div>
+        </section>
 
     </main>
 </div>
 
 <script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
 <script src="/js/layout.js"></script>
-<script>
-initLayout();
-</script>
+<script>initLayout();</script>
 <script src="/js/suppliers.js"></script>
 
 </body>

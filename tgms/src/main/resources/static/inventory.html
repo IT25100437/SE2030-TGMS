@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TGMS – Inventory Management</title>
-    <meta name="description" content="Manage raw material and finished goods inventory — track stock levels, movements and low-stock alerts.">
+    <meta name="description" content="Track raw materials and finished goods, manage stock movements and monitor low-stock alerts.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,10 +14,12 @@
 </head>
 <body>
 
-<!-- TOP BAR -->
+<!-- ================================================
+     TOP BAR
+     ================================================ -->
 <header class="topbar" role="banner">
     <div class="topbar-brand">
-        <button class="hamburger" id="sidebarToggle" aria-label="Toggle sidebar" style="display:flex; margin-right:4px;">
+        <button class="hamburger" id="sidebarToggle" aria-label="Toggle sidebar">
             <span></span><span></span><span></span>
         </button>
         <div class="topbar-logo" aria-hidden="true">TG</div>
@@ -26,6 +28,7 @@
             <span>Textile &amp; Garment Management</span>
         </div>
     </div>
+
     <div class="user-info">
         <div class="user-avatar" id="userAvatar" aria-hidden="true">U</div>
         <div class="user-details">
@@ -39,43 +42,44 @@
     </div>
 </header>
 
+<!-- ================================================
+     LAYOUT
+     ================================================ -->
 <div class="layout">
 
-    <!-- SIDEBAR -->
+    <!-- SIDEBAR (rendered by /js/layout.js, role-based) -->
     <nav class="sidebar" id="sidebar" role="navigation" aria-label="Module navigation">
-        <div class="sidebar-section-label">Navigation</div>
+        <!-- Navigation is rendered by the shared /js/layout.js (role-based) -->
     </nav>
+
+    <!-- SIDEBAR OVERLAY for mobile -->
     <div id="sidebarOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:299;"></div>
 
     <!-- MAIN CONTENT -->
-    <main class="content">
-
+    <main class="content" id="mainContent">
         <div class="page-header">
             <div class="page-label">Inventory Management</div>
             <h2>Stock Control &amp; Inventory</h2>
             <p class="page-desc">Track raw materials and finished goods, manage stock movements and monitor low-stock alerts.</p>
         </div>
 
-        <!-- Low-stock banner -->
+        <!-- Low-stock banner (filled by inventory.js) -->
         <div id="lowStockBanner" class="alert warn hidden" role="alert"></div>
 
-        <!-- Alerts -->
-        <div id="pageAlert" class="alert hidden" role="alert"></div>
-
         <!-- Add Item -->
-        <div class="card">
-            <div class="card-header">
-                <h3><i class="fas fa-plus-circle" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Add Inventory Item</h3>
+        <section class="card" id="addItemCard">
+            <div class="section-header">
+                <h3><i class="fas fa-plus-circle section-icon" aria-hidden="true"></i>Add Inventory Item</h3>
             </div>
             <form id="itemForm" novalidate>
                 <div class="form-grid">
                     <div>
                         <label for="i_sku">SKU</label>
-                        <input type="text" id="i_sku" required placeholder="e.g. RM-0231">
+                        <input type="text" id="i_sku" required autocomplete="off" placeholder="e.g. RM-0231">
                     </div>
                     <div>
                         <label for="i_name">Item Name</label>
-                        <input type="text" id="i_name" required placeholder="e.g. Cotton Fabric – White">
+                        <input type="text" id="i_name" required autocomplete="off" placeholder="e.g. Cotton Fabric – White">
                     </div>
                     <div>
                         <label for="i_type">Category</label>
@@ -86,30 +90,30 @@
                     </div>
                     <div>
                         <label for="i_location">Location</label>
-                        <input type="text" id="i_location" required placeholder="e.g. Warehouse A – Shelf 3">
+                        <input type="text" id="i_location" required autocomplete="off" placeholder="e.g. Warehouse A – Shelf 3">
                     </div>
                     <div>
                         <label for="i_quantity">Initial Quantity</label>
-                        <input type="number" id="i_quantity" min="0" value="0" required>
+                        <input type="number" id="i_quantity" min="0" step="1" value="0" required>
                     </div>
                     <div>
                         <label for="i_threshold">Low-Stock Threshold</label>
-                        <input type="number" id="i_threshold" min="0" value="10" required>
+                        <input type="number" id="i_threshold" min="0" step="1" value="10" required>
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="primary">
-                        <i class="fas fa-plus" aria-hidden="true"></i>
-                        Add Item
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Add Item
                     </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetItemForm()">Reset</button>
                 </div>
             </form>
-        </div>
+        </section>
 
         <!-- Edit Item -->
-        <div class="card hidden" id="editItemPanel">
-            <div class="card-header">
-                <h3><i class="fas fa-edit" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Edit Inventory Item — <span id="editItemTitle"></span></h3>
+        <section class="card hidden" id="editItemPanel">
+            <div class="section-header">
+                <h3><i class="fas fa-edit section-icon" aria-hidden="true"></i>Edit Inventory Item — <span id="editItemTitle"></span></h3>
             </div>
             <form id="editItemForm" novalidate>
                 <input type="hidden" id="editItemId">
@@ -117,10 +121,11 @@
                     <div>
                         <label for="editItemSku">SKU</label>
                         <input type="text" id="editItemSku" readonly>
+                        <div class="form-hint">The SKU cannot be changed.</div>
                     </div>
                     <div>
                         <label for="editItemName">Item Name</label>
-                        <input type="text" id="editItemName" required>
+                        <input type="text" id="editItemName" required autocomplete="off">
                     </div>
                     <div>
                         <label for="editItemType">Category</label>
@@ -131,37 +136,40 @@
                     </div>
                     <div>
                         <label for="editItemLocation">Location</label>
-                        <input type="text" id="editItemLocation" required>
+                        <input type="text" id="editItemLocation" required autocomplete="off">
                     </div>
                     <div>
                         <label for="editItemThreshold">Low-Stock Threshold</label>
-                        <input type="number" id="editItemThreshold" min="0" required>
+                        <input type="number" id="editItemThreshold" min="0" step="1" required>
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="primary">
-                        <i class="fas fa-save" aria-hidden="true"></i>
-                        Update Item
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save" aria-hidden="true"></i> Update Item
                     </button>
-                    <button type="button" class="secondary" onclick="cancelEditItem()">Cancel</button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelEditItem()">Cancel</button>
                 </div>
             </form>
-        </div>
+        </section>
 
         <!-- Inventory List -->
-        <div class="card">
-            <div class="card-header">
-                <h3><i class="fas fa-clipboard-list" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Inventory Items</h3>
-                <button class="secondary" onclick="exportStockReport()" id="exportBtn">
-                    <i class="fas fa-download" aria-hidden="true"></i>
-                    Export Report
-                </button>
+        <section class="card" id="inventoryListCard">
+            <div class="section-header">
+                <div>
+                    <h3><i class="fas fa-clipboard-list section-icon" aria-hidden="true"></i>Inventory Items</h3>
+                    <div class="section-desc">Search by SKU or name, filter by category, or show only low-stock items.</div>
+                </div>
+                <div class="section-actions">
+                    <button class="btn btn-secondary" onclick="exportStockReport(this)" id="exportBtn">
+                        <i class="fas fa-download" aria-hidden="true"></i> Export Report
+                    </button>
+                </div>
             </div>
 
             <div class="filters">
                 <div>
                     <label for="f_keyword">Search by SKU or name</label>
-                    <input type="text" id="f_keyword" placeholder="e.g. cotton">
+                    <input type="text" id="f_keyword" placeholder="e.g. cotton" autocomplete="off">
                 </div>
                 <div>
                     <label for="f_type">Filter by category</label>
@@ -171,50 +179,46 @@
                         <option value="FINISHED_GOOD">Finished Good</option>
                     </select>
                 </div>
-                <div style="display:flex; gap:8px; align-items:flex-end; flex:none;">
-                    <button class="primary" onclick="loadItems()">
-                        <i class="fas fa-search" aria-hidden="true"></i>
-                        Search
+                <div class="filter-actions">
+                    <button class="btn btn-primary" onclick="loadItems()">
+                        <i class="fas fa-search" aria-hidden="true"></i> Search
                     </button>
-                    <button class="secondary" onclick="clearFilters()">
-                        <i class="fas fa-times" aria-hidden="true"></i>
-                        Clear
+                    <button class="btn btn-secondary" onclick="clearFilters()">
+                        <i class="fas fa-times" aria-hidden="true"></i> Clear
                     </button>
-                    <button class="secondary" onclick="loadLowStock()">
-                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                        Low-Stock Only
+                    <button class="btn btn-warning" onclick="loadLowStock()">
+                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Low-Stock Only
                     </button>
                 </div>
             </div>
 
             <div class="table-wrap">
-                <table>
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>SKU</th>
                             <th>Name</th>
                             <th>Category</th>
-                            <th>Qty</th>
-                            <th>Threshold</th>
+                            <th class="col-num">Qty</th>
+                            <th class="col-num">Threshold</th>
                             <th>Location</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="itemTableBody">
-                        <tr><td colspan="8" class="small-text" style="padding:20px;">Loading inventory…</td></tr>
+                        <tr class="state-row"><td colspan="8"><div class="state-block loading-state" role="status"><span class="spinner lg" aria-hidden="true"></span><span>Loading inventory…</span></div></td></tr>
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
         <!-- Stock Movement Panel -->
-        <div class="card hidden" id="movementPanel">
-            <div class="card-header">
-                <h3><i class="fas fa-exchange-alt" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Stock Movement — <span id="movementItemName"></span></h3>
-                <button class="link-btn" onclick="closeMovementPanel()">
-                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                    Back to inventory list
+        <section class="card hidden" id="movementPanel">
+            <div class="section-header">
+                <h3><i class="fas fa-exchange-alt section-icon" aria-hidden="true"></i>Stock Movement — <span id="movementItemName"></span></h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeMovementPanel()">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i> Back to inventory list
                 </button>
             </div>
 
@@ -230,41 +234,42 @@
                     </div>
                     <div>
                         <label for="m_quantity">Quantity</label>
-                        <input type="number" id="m_quantity" min="1" required placeholder="Enter quantity">
+                        <input type="number" id="m_quantity" min="1" step="1" required placeholder="Enter quantity">
+                    </div>
+                    <div class="span-all">
+                        <label for="m_note">Note (optional)</label>
+                        <input type="text" id="m_note" autocomplete="off" placeholder="e.g. received from Supplier X">
                     </div>
                 </div>
-                <div style="margin-top:10px;">
-                    <label for="m_note">Note (optional)</label>
-                    <input type="text" id="m_note" placeholder="e.g. received from Supplier X">
-                </div>
                 <div class="form-actions">
-                    <button type="submit" class="primary">
-                        <i class="fas fa-check" aria-hidden="true"></i>
-                        Record Movement
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check" aria-hidden="true"></i> Record Movement
                     </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetMovementForm()">Reset</button>
                 </div>
             </form>
 
-            <h4 style="margin-top:24px; margin-bottom:12px;">Movement History</h4>
+            <h4 class="section-subtitle">Movement History</h4>
             <div class="table-wrap">
-                <table>
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>Date / Time</th>
                             <th>Direction</th>
-                            <th>Qty</th>
+                            <th class="col-num">Qty</th>
                             <th>Note</th>
                         </tr>
                     </thead>
                     <tbody id="movementTableBody"></tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
     </main>
 </div>
 
 <script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
 <script src="/js/layout.js"></script>
 <script>initLayout();</script>
 <script src="/js/inventory.js"></script>

@@ -1,5 +1,14 @@
-let currentSupplierId = null;
+/**
+ * Supplier Management page.
+ * API endpoints and request/response formats are unchanged — this file only
+ * adds validation, loading / empty / error states, toast notifications and
+ * the permanent-delete confirmation modal.
+ */
 
+let currentSupplierId = null;
+let suppliersCache = [];
+let contractsCache = [];
+let supplierRequestSeq = 0;
 
 // ============================================================
 // INITIALIZATION
@@ -7,15 +16,38 @@ let currentSupplierId = null;
 
 (async function init() {
 
-    // initLayout() handles requireLogin + topbar/sidebar population.
-    // It is called from the inline script block in the HTML before this file loads.
-    // We still need to load the module data.
+    // initLayout() (inline in the HTML) handles the topbar/sidebar.
     const user = await requireLogin();
     if (!user) return;
+
+    // Press Enter inside a search box to search.
+    ['f_name', 'f_category'].forEach(id => {
+        document.getElementById(id).addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); loadSuppliers(); }
+        });
+    });
 
     await loadSuppliers();
 
 })();
+
+
+// ============================================================
+// VALIDATION RULES (client-side only — the backend still validates too)
+// ============================================================
+
+function supplierRules(prefix) {
+    const ids = prefix === 'edit'
+        ? { name: 'editSupplierName', contact: 'editSupplierContact', category: 'editSupplierCategory' }
+        : { name: 's_name', contact: 's_contact', category: 's_category' };
+
+    return [
+        { el: ids.name,     key: 'name',     label: 'Supplier name',     required: true, maxLength: 150 },
+        { el: ids.contact,  key: 'contact',  label: 'Contact',           required: true, type: 'contact',
+          requiredMessage: 'Contact (phone number or email address) is required.' },
+        { el: ids.category, key: 'materialCategory', label: 'Material category', required: true, maxLength: 100 }
+    ];
+}
 
 
 // ============================================================
@@ -27,113 +59,74 @@ document.getElementById('supplierForm')
 
         e.preventDefault();
 
-        hideAlert('pageAlert');
+        const result = UI.validate(supplierRules('new'));
+        if (!result.valid) return;
 
         const payload = {
-
-            name: document
-                .getElementById('s_name')
-                .value
-                .trim(),
-
-            contact: document
-                .getElementById('s_contact')
-                .value
-                .trim(),
-
-            materialCategory: document
-                .getElementById('s_category')
-                .value
-                .trim()
-
+            name: result.values.name,
+            contact: result.values.contact,
+            materialCategory: result.values.materialCategory
         };
 
-        try {
+        const btn = document.getElementById('supplierSubmitBtn');
 
-            await api.post('/api/suppliers', payload);
+        await UI.guard(btn, 'Registering…', async () => {
+            try {
+                await api.post('/api/suppliers', payload);
 
-            showAlert(
-                'pageAlert',
-                'Supplier registered successfully.',
-                'success'
-            );
+                UI.success('Supplier registered successfully.');
+                resetSupplierForm();
+                await loadSuppliers();
 
-            document
-                .getElementById('supplierForm')
-                .reset();
-
-            await loadSuppliers();
-
-        } catch (err) {
-
-            showAlert(
-                'pageAlert',
-                err.message,
-                'error'
-            );
-
-        }
+            } catch (err) {
+                UI.error(err.message);
+            }
+        });
 
     });
 
+function resetSupplierForm() {
+    document.getElementById('supplierForm').reset();
+    UI.clearErrors('supplierForm');
+}
+
+function focusRegisterSupplier() {
+    const card = document.getElementById('registerSupplierCard');
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => document.getElementById('s_name').focus({ preventScroll: true }), 350);
+}
+
 
 // ============================================================
-// NEW: EDIT SUPPLIER DETAILS
+// EDIT SUPPLIER DETAILS
 // ============================================================
 
-async function editSupplier(id) {
+async function editSupplier(id, btn) {
 
-    hideAlert('pageAlert');
+    await UI.guard(btn, 'Loading…', async () => {
 
-    try {
+        try {
 
-        const supplier =
-            await api.get(`/api/suppliers/${id}`);
+            const supplier =
+                await api.get(`/api/suppliers/${id}`);
 
-        // Store supplier ID
-        document
-            .getElementById('editSupplierId')
-            .value = supplier.id;
+            UI.clearErrors('editSupplierForm');
 
-        // Fill existing supplier information
-        document
-            .getElementById('editSupplierName')
-            .value = supplier.name;
+            document.getElementById('editSupplierId').value = supplier.id;
+            document.getElementById('editSupplierName').value = supplier.name;
+            document.getElementById('editSupplierContact').value = supplier.contact;
+            document.getElementById('editSupplierCategory').value = supplier.materialCategory;
+            document.getElementById('editSupplierTitle').textContent = supplier.name;
 
-        document
-            .getElementById('editSupplierContact')
-            .value = supplier.contact;
+            const panel = document.getElementById('editSupplierPanel');
+            panel.classList.remove('hidden');
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-        document
-            .getElementById('editSupplierCategory')
-            .value = supplier.materialCategory;
+        } catch (err) {
+            UI.error('Unable to load supplier details. ' + err.message);
+        }
 
-        document
-            .getElementById('editSupplierTitle')
-            .textContent = supplier.name;
-
-        // Show edit panel
-        document
-            .getElementById('editSupplierPanel')
-            .classList.remove('hidden');
-
-        // Scroll to edit form
-        document
-            .getElementById('editSupplierPanel')
-            .scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-
-    } catch (err) {
-
-        showAlert(
-            'pageAlert',
-            err.message,
-            'error'
-        );
-
-    }
+    });
 
 }
 
@@ -147,58 +140,31 @@ document.getElementById('editSupplierForm')
 
         e.preventDefault();
 
-        hideAlert('pageAlert');
+        const result = UI.validate(supplierRules('edit'));
+        if (!result.valid) return;
 
-        const id =
-            document
-                .getElementById('editSupplierId')
-                .value;
+        const id = document.getElementById('editSupplierId').value;
 
         const payload = {
-
-            name: document
-                .getElementById('editSupplierName')
-                .value
-                .trim(),
-
-            contact: document
-                .getElementById('editSupplierContact')
-                .value
-                .trim(),
-
-            materialCategory: document
-                .getElementById('editSupplierCategory')
-                .value
-                .trim()
-
+            name: result.values.name,
+            contact: result.values.contact,
+            materialCategory: result.values.materialCategory
         };
 
-        try {
+        const btn = e.submitter || document.querySelector('#editSupplierForm [type="submit"]');
 
-            await api.put(
-                `/api/suppliers/${id}`,
-                payload
-            );
+        await UI.guard(btn, 'Updating…', async () => {
+            try {
+                await api.put(`/api/suppliers/${id}`, payload);
 
-            showAlert(
-                'pageAlert',
-                'Supplier details updated successfully.',
-                'success'
-            );
+                UI.success('Supplier updated successfully.');
+                cancelEditSupplier();
+                await loadSuppliers();
 
-            cancelEditSupplier();
-
-            await loadSuppliers();
-
-        } catch (err) {
-
-            showAlert(
-                'pageAlert',
-                err.message,
-                'error'
-            );
-
-        }
+            } catch (err) {
+                UI.error(err.message);
+            }
+        });
 
     });
 
@@ -209,21 +175,11 @@ document.getElementById('editSupplierForm')
 
 function cancelEditSupplier() {
 
-    document
-        .getElementById('editSupplierPanel')
-        .classList.add('hidden');
-
-    document
-        .getElementById('editSupplierForm')
-        .reset();
-
-    document
-        .getElementById('editSupplierId')
-        .value = '';
-
-    document
-        .getElementById('editSupplierTitle')
-        .textContent = '';
+    document.getElementById('editSupplierPanel').classList.add('hidden');
+    document.getElementById('editSupplierForm').reset();
+    UI.clearErrors('editSupplierForm');
+    document.getElementById('editSupplierId').value = '';
+    document.getElementById('editSupplierTitle').textContent = '';
 
 }
 
@@ -232,19 +188,16 @@ function cancelEditSupplier() {
 // PBI-03: SEARCH & FILTER
 // ============================================================
 
+function currentSupplierFilters() {
+    return {
+        name: document.getElementById('f_name').value.trim(),
+        category: document.getElementById('f_category').value.trim()
+    };
+}
+
 async function loadSuppliers() {
 
-    const name =
-        document
-            .getElementById('f_name')
-            .value
-            .trim();
-
-    const category =
-        document
-            .getElementById('f_category')
-            .value
-            .trim();
+    const { name, category } = currentSupplierFilters();
 
     const params = new URLSearchParams();
 
@@ -262,20 +215,26 @@ async function loadSuppliers() {
             ? '?' + params.toString()
             : '');
 
+    const tbody = document.getElementById('supplierTableBody');
+    tbody.innerHTML = UI.loadingRow(6, 'Loading suppliers…');
+
+    const requestId = ++supplierRequestSeq;
+
     try {
 
-        const suppliers =
-            await api.get(url);
+        const suppliers = await api.get(url);
 
+        // Ignore out-of-date responses if the user searched again meanwhile.
+        if (requestId !== supplierRequestSeq) return;
+
+        suppliersCache = suppliers;
         renderSuppliers(suppliers);
 
     } catch (err) {
 
-        showAlert(
-            'pageAlert',
-            err.message,
-            'error'
-        );
+        if (requestId !== supplierRequestSeq) return;
+
+        tbody.innerHTML = UI.errorRow(6, 'Unable to load suppliers.', 'loadSuppliers()', 'Try Again', err.message);
 
     }
 
@@ -284,13 +243,8 @@ async function loadSuppliers() {
 
 function clearFilters() {
 
-    document
-        .getElementById('f_name')
-        .value = '';
-
-    document
-        .getElementById('f_category')
-        .value = '';
+    document.getElementById('f_name').value = '';
+    document.getElementById('f_category').value = '';
 
     loadSuppliers();
 
@@ -303,39 +257,29 @@ function clearFilters() {
 
 async function deactivateSupplier(id) {
 
-    if (!confirm(
-        'Deactivate this supplier? ' +
-        'It will be hidden from active operations ' +
-        'but its history is kept.'
-    )) {
-        return;
-    }
+    const supplier = suppliersCache.find(s => s.id === id);
 
-    hideAlert('pageAlert');
+    await UI.confirm({
+        title: 'Deactivate Supplier?',
+        message: 'The supplier will be marked inactive and hidden from active operations. Its history is kept.',
+        details: supplier ? [
+            { text: supplier.name, main: true },
+            { text: supplier.materialCategory },
+            { text: supplier.contact, muted: true }
+        ] : null,
+        variant: 'warn',
+        icon: 'fa-ban',
+        confirmText: 'Deactivate',
+        busyText: 'Deactivating…',
+        onConfirm: async () => {
 
-    try {
+            await api.patch(`/api/suppliers/${id}/deactivate`);
 
-        await api.patch(
-            `/api/suppliers/${id}/deactivate`
-        );
+            UI.success('Supplier deactivated successfully.');
+            await loadSuppliers();
 
-        showAlert(
-            'pageAlert',
-            'Supplier deactivated.',
-            'success'
-        );
-
-        await loadSuppliers();
-
-    } catch (err) {
-
-        showAlert(
-            'pageAlert',
-            err.message,
-            'error'
-        );
-
-    }
+        }
+    });
 
 }
 
@@ -347,51 +291,54 @@ async function deactivateSupplier(id) {
 
 async function permanentlyDeleteSupplier(id) {
 
-    if (!confirm(
-        'Are you sure you want to permanently delete this supplier? ' +
-        'The supplier and all of its contracts will be removed from the ' +
-        'database. This action cannot be undone.\n\n' +
-        '(To keep the record, use Deactivate instead.)'
-    )) {
-        return;
-    }
+    const supplier = suppliersCache.find(s => s.id === id);
 
-    hideAlert('pageAlert');
+    const details = supplier
+        ? [
+            { text: supplier.name, main: true },
+            { text: supplier.materialCategory },
+            { text: supplier.contact },
+            { text: 'All contracts for this supplier will be removed as well.', muted: true }
+        ]
+        : [{ text: 'Supplier #' + id, main: true }];
 
-    try {
+    await UI.confirm({
+        title: 'Permanently Delete Supplier?',
+        message: 'You are about to permanently delete:',
+        details,
+        warning: 'This action cannot be undone. To keep the record, use Deactivate instead.',
+        variant: 'danger',
+        icon: 'fa-trash-alt',
+        confirmText: 'Delete Permanently',
+        busyText: 'Deleting…',
+        onConfirm: async () => {
 
-        await api.del(
-            `/api/suppliers/${id}/permanent`
-        );
+            try {
 
-        // Close any panel that was showing the deleted supplier.
-        if (currentSupplierId === id) {
-            closeContractPanel();
+                await api.del(`/api/suppliers/${id}/permanent`);
+
+            } catch (err) {
+
+                // Show the reason and refresh, exactly like before.
+                UI.error('Could not permanently delete supplier: ' + err.message);
+                await loadSuppliers();
+                return;
+            }
+
+            // Close any panel that was showing the deleted supplier.
+            if (currentSupplierId === id) {
+                closeContractPanel();
+            }
+
+            if (document.getElementById('editSupplierId').value === String(id)) {
+                cancelEditSupplier();
+            }
+
+            UI.success('Supplier permanently deleted successfully.');
+            await loadSuppliers();
+
         }
-
-        if (document.getElementById('editSupplierId').value === String(id)) {
-            cancelEditSupplier();
-        }
-
-        showAlert(
-            'pageAlert',
-            'Supplier permanently deleted.',
-            'success'
-        );
-
-        await loadSuppliers();
-
-    } catch (err) {
-
-        showAlert(
-            'pageAlert',
-            'Could not permanently delete supplier: ' + err.message,
-            'error'
-        );
-
-        await loadSuppliers();
-
-    }
+    });
 
 }
 
@@ -400,9 +347,12 @@ async function permanentlyDeleteSupplier(id) {
 // PBI-05: EXPORT SUPPLIER LIST
 // ============================================================
 
-function exportSuppliers() {
+function exportSuppliers(btn) {
 
     // Browser handles the CSV download.
+    UI.setBusy(btn, true, 'Preparing…');
+    setTimeout(() => UI.setBusy(btn, false), 2000);
+
     window.location.href =
         '/api/suppliers/export';
 
@@ -415,106 +365,67 @@ function exportSuppliers() {
 
 function renderSuppliers(suppliers) {
 
-    const tbody =
-        document.getElementById(
-            'supplierTableBody'
-        );
+    const tbody = document.getElementById('supplierTableBody');
 
     if (!suppliers.length) {
 
-        tbody.innerHTML =
-            '<tr>' +
-            '<td colspan="6" class="small-text">' +
-            'No suppliers found.' +
-            '</td>' +
-            '</tr>';
+        const { name, category } = currentSupplierFilters();
+
+        tbody.innerHTML = (name || category)
+            ? UI.emptyRow(6, {
+                icon: 'fa-search',
+                title: 'No suppliers found',
+                text: 'Try changing your search criteria.',
+                actionLabel: 'Clear Search',
+                actionIcon: 'fa-times',
+                actionOnclick: 'clearFilters()'
+            })
+            : UI.emptyRow(6, {
+                icon: 'fa-truck',
+                title: 'No suppliers yet',
+                text: 'Register your first supplier using the form above.',
+                actionLabel: 'Register Supplier',
+                actionIcon: 'fa-plus',
+                actionOnclick: 'focusRegisterSupplier()'
+            });
 
         return;
     }
 
-    tbody.innerHTML =
-        suppliers.map(s => {
+    tbody.innerHTML = suppliers.map(s => {
 
-            const supplierName =
-                escapeHtml(s.name);
+        const deactivateButton =
+            s.status === 'ACTIVE'
+                ? `<button class="btn btn-warning" onclick="deactivateSupplier(${s.id})">
+                        <i class="fas fa-ban" aria-hidden="true"></i> Deactivate
+                   </button>`
+                : '';
 
-            const supplierContact =
-                escapeHtml(s.contact);
-
-            const materialCategory =
-                escapeHtml(s.materialCategory);
-
-            const statusClass =
-                s.status === 'ACTIVE'
-                    ? 'ok'
-                    : 'low';
-
-            const deactivateButton =
-                s.status === 'ACTIVE'
-                    ? `
-                        <button
-                            class="danger"
-                            onclick="deactivateSupplier(${s.id})">
-                            Deactivate
+        return `
+            <tr>
+                <td class="col-id">${s.id}</td>
+                <td class="col-strong">${escapeHtml(s.name)}</td>
+                <td>${escapeHtml(s.contact)}</td>
+                <td>${escapeHtml(s.materialCategory)}</td>
+                <td>${UI.statusBadge(s.status)}</td>
+                <td class="col-actions">
+                    <div class="table-actions">
+                        <button class="btn btn-secondary" onclick="editSupplier(${s.id}, this)">
+                            <i class="fas fa-edit" aria-hidden="true"></i> Edit
                         </button>
-                      `
-                    : '';
-
-            const permanentDeleteButton = `
-                        <button
-                            class="danger"
-                            onclick="permanentlyDeleteSupplier(${s.id})">
-                            Permanent Delete
+                        <button class="btn btn-secondary" onclick="openContractPanel(${s.id})">
+                            <i class="fas fa-file-contract" aria-hidden="true"></i> Manage Contracts
                         </button>
-                      `;
-
-            return `
-                <tr>
-
-                    <td>${s.id}</td>
-
-                    <td>${supplierName}</td>
-
-                    <td>${supplierContact}</td>
-
-                    <td>${materialCategory}</td>
-
-                    <td>
-                        <span class="badge ${statusClass}">
-                            ${s.status}
-                        </span>
-                    </td>
-
-                    <td>
-
-                        <button
-                            class="secondary"
-                            onclick="editSupplier(${s.id})">
-                            Edit
-                        </button>
-
-                        <button
-                            class="secondary"
-                            onclick="openContractPanel(
-                                ${s.id},
-                                '${supplierName.replace(
-                /'/g,
-                "\\'"
-            )}'
-                            )">
-                            Manage Contracts
-                        </button>
-
                         ${deactivateButton}
+                        <button class="btn btn-danger-solid" onclick="permanentlyDeleteSupplier(${s.id})">
+                            <i class="fas fa-trash-alt" aria-hidden="true"></i> Permanent Delete
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
 
-                        ${permanentDeleteButton}
-
-                    </td>
-
-                </tr>
-            `;
-
-        }).join('');
+    }).join('');
 
 }
 
@@ -523,30 +434,22 @@ function renderSuppliers(suppliers) {
 // PBI-02: CONTRACT MANAGEMENT
 // ============================================================
 
-async function openContractPanel(
-    supplierId,
-    supplierName
-) {
+async function openContractPanel(supplierId) {
+
+    const supplier = suppliersCache.find(s => s.id === supplierId);
 
     currentSupplierId = supplierId;
 
-    document
-        .getElementById('contractSupplierName')
-        .textContent = supplierName;
+    document.getElementById('contractSupplierName').textContent =
+        supplier ? supplier.name : 'Supplier #' + supplierId;
 
-    document
-        .getElementById('contractPanel')
-        .classList.remove('hidden');
+    document.getElementById('contractPanel').classList.remove('hidden');
 
     resetContractForm();
 
-    await loadContracts();
+    document.getElementById('contractPanel').scrollIntoView({ behavior: 'smooth' });
 
-    document
-        .getElementById('contractPanel')
-        .scrollIntoView({
-            behavior: 'smooth'
-        });
+    await loadContracts();
 
 }
 
@@ -555,9 +458,7 @@ function closeContractPanel() {
 
     currentSupplierId = null;
 
-    document
-        .getElementById('contractPanel')
-        .classList.add('hidden');
+    document.getElementById('contractPanel').classList.add('hidden');
 
 }
 
@@ -568,72 +469,56 @@ function closeContractPanel() {
 
 async function loadContracts() {
 
+    const tbody = document.getElementById('contractTableBody');
+    const supplierId = currentSupplierId;
+
+    tbody.innerHTML = UI.loadingRow(5, 'Loading contracts…');
+
     try {
 
         const contracts =
             await api.get(
-                `/api/suppliers/${currentSupplierId}/contracts`
+                `/api/suppliers/${supplierId}/contracts`
             );
 
-        const tbody =
-            document.getElementById(
-                'contractTableBody'
-            );
+        if (supplierId !== currentSupplierId) return;
+
+        contractsCache = contracts;
 
         if (!contracts.length) {
 
-            tbody.innerHTML =
-                '<tr>' +
-                '<td colspan="5" class="small-text">' +
-                'No contracts yet.' +
-                '</td>' +
-                '</tr>';
+            tbody.innerHTML = UI.emptyRow(5, {
+                icon: 'fa-file-contract',
+                title: 'No contracts yet',
+                text: 'Use the form below to add the first contract for this supplier.',
+                compact: true
+            });
 
             return;
         }
 
         tbody.innerHTML =
             contracts.map(c => `
-
                 <tr>
-
-                    <td>${c.id}</td>
-
-                    <td>
-                        ${escapeHtml(c.terms)}
+                    <td class="col-id">${c.id}</td>
+                    <td class="col-wrap">${escapeHtml(c.terms)}</td>
+                    <td class="nowrap">${escapeHtml(c.startDate)}</td>
+                    <td class="nowrap">${escapeHtml(c.endDate)}</td>
+                    <td class="col-actions">
+                        <div class="table-actions">
+                            <button class="btn btn-secondary" onclick="editContract(${c.id})">
+                                <i class="fas fa-edit" aria-hidden="true"></i> Edit
+                            </button>
+                        </div>
                     </td>
-
-                    <td>
-                        ${c.startDate}
-                    </td>
-
-                    <td>
-                        ${c.endDate}
-                    </td>
-
-                    <td>
-
-                        <button
-                            class="link-btn"
-                            onclick='editContract(
-                                ${JSON.stringify(c)}
-                            )'>
-                            Edit
-                        </button>
-
-                    </td>
-
                 </tr>
-
             `).join('');
 
     } catch (err) {
 
-        showAlert(
-            'pageAlert',
-            err.message,
-            'error'
-        );
+        if (supplierId !== currentSupplierId) return;
+
+        tbody.innerHTML = UI.errorRow(5, 'Unable to load contracts.', 'loadContracts()', 'Try Again', err.message);
 
     }
 
@@ -644,38 +529,28 @@ async function loadContracts() {
 // EDIT CONTRACT
 // ============================================================
 
-function editContract(contract) {
+function editContract(contractId) {
 
-    document
-        .getElementById('c_contractId')
-        .value = contract.id;
+    const contract = contractsCache.find(c => c.id === contractId);
 
-    document
-        .getElementById('c_terms')
-        .value = contract.terms;
+    if (!contract) return;
 
-    document
-        .getElementById('c_start')
-        .value = contract.startDate;
+    UI.clearErrors('contractForm');
 
-    document
-        .getElementById('c_end')
-        .value = contract.endDate;
+    document.getElementById('c_contractId').value = contract.id;
+    document.getElementById('c_terms').value = contract.terms;
+    document.getElementById('c_start').value = contract.startDate;
+    document.getElementById('c_end').value = contract.endDate;
 
-    document
-        .getElementById('contractFormTitle')
-        .textContent =
-        'Update Contract #' +
-        contract.id;
+    document.getElementById('contractFormTitle').textContent =
+        'Update Contract #' + contract.id;
 
-    document
-        .getElementById('contractSubmitBtn')
-        .textContent =
+    document.getElementById('contractSubmitLabel').textContent =
         'Update Contract';
 
-    document
-        .getElementById('contractCancelEditBtn')
-        .classList.remove('hidden');
+    document.getElementById('contractCancelEditBtn').classList.remove('hidden');
+
+    document.getElementById('contractForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
 
 }
 
@@ -686,27 +561,18 @@ function editContract(contract) {
 
 function resetContractForm() {
 
-    document
-        .getElementById('contractForm')
-        .reset();
+    document.getElementById('contractForm').reset();
+    UI.clearErrors('contractForm');
 
-    document
-        .getElementById('c_contractId')
-        .value = '';
+    document.getElementById('c_contractId').value = '';
 
-    document
-        .getElementById('contractFormTitle')
-        .textContent =
+    document.getElementById('contractFormTitle').textContent =
         'Add Contract';
 
-    document
-        .getElementById('contractSubmitBtn')
-        .textContent =
+    document.getElementById('contractSubmitLabel').textContent =
         'Add Contract';
 
-    document
-        .getElementById('contractCancelEditBtn')
-        .classList.add('hidden');
+    document.getElementById('contractCancelEditBtn').classList.add('hidden');
 
 }
 
@@ -720,91 +586,61 @@ document.getElementById('contractForm')
 
         e.preventDefault();
 
-        hideAlert('pageAlert');
+        const result = UI.validate([
+            { el: 'c_terms', key: 'terms', label: 'Contract terms', required: true, maxLength: 1000 },
+            { el: 'c_start', key: 'startDate', label: 'Start date', required: true, type: 'date' },
+            { el: 'c_end',   key: 'endDate',   label: 'End date',   required: true, type: 'date',
+              notBefore: 'c_start', notBeforeMessage: 'End date cannot be before the start date.' }
+        ]);
 
-        const contractId =
-            document
-                .getElementById('c_contractId')
-                .value;
+        if (!result.valid) return;
+
+        const contractId = document.getElementById('c_contractId').value;
 
         const payload = {
-
-            terms:
-                document
-                    .getElementById('c_terms')
-                    .value
-                    .trim(),
-
-            startDate:
-            document
-                .getElementById('c_start')
-                .value,
-
-            endDate:
-            document
-                .getElementById('c_end')
-                .value
-
+            terms: result.values.terms,
+            startDate: result.values.startDate,
+            endDate: result.values.endDate
         };
 
-        try {
+        const btn = document.getElementById('contractSubmitBtn');
 
-            if (contractId) {
+        let saved = false;
 
-                await api.put(
-                    `/api/contracts/${contractId}`,
-                    payload
-                );
+        await UI.guard(btn, contractId ? 'Updating…' : 'Adding…', async () => {
+            try {
 
-                showAlert(
-                    'pageAlert',
-                    'Contract updated.',
-                    'success'
-                );
+                if (contractId) {
 
-            } else {
+                    await api.put(
+                        `/api/contracts/${contractId}`,
+                        payload
+                    );
 
-                await api.post(
-                    `/api/suppliers/${currentSupplierId}/contracts`,
-                    payload
-                );
+                    UI.success('Contract updated successfully.');
 
-                showAlert(
-                    'pageAlert',
-                    'Contract added.',
-                    'success'
-                );
+                } else {
 
+                    await api.post(
+                        `/api/suppliers/${currentSupplierId}/contracts`,
+                        payload
+                    );
+
+                    UI.success('Contract added successfully.');
+
+                }
+
+                saved = true;
+
+            } catch (err) {
+                UI.error(err.message);
             }
+        });
 
+        // Reset after the button is back to normal so its label is restored correctly.
+        if (saved) {
             resetContractForm();
-
             await loadContracts();
-
-        } catch (err) {
-
-            showAlert(
-                'pageAlert',
-                err.message,
-                'error'
-            );
-
         }
 
     });
-
-
-// ============================================================
-// HTML ESCAPING
-// ============================================================
-
-function escapeHtml(str) {
-
-    const div =
-        document.createElement('div');
-
-    div.textContent = str ?? '';
-
-    return div.innerHTML;
-
-}

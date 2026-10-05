@@ -87,7 +87,7 @@ function renderVisualStages(currentStatus) {
 function renderWorkOrders(workOrders) {
     const tbody = document.getElementById('workOrderTableBody');
     if (!workOrders.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="small-text">No work orders yet.</td></tr>';
+        tbody.innerHTML = UI.emptyRow(6, { icon:'fa-industry', title:'No work orders yet', text:'Create a work order from a confirmed customer order.' });
         return;
     }
     tbody.innerHTML = workOrders.map(wo => `
@@ -151,27 +151,27 @@ async function cancelWorkOrder(id) {
 
 // ---- Permanent delete (only CANCELLED work orders; the row is really removed) ----
 async function permanentlyDeleteWorkOrder(id) {
-    if (!confirm('Are you sure you want to permanently delete this work order? The work order and its stage history will be removed from the database. This action cannot be undone.')) {
-        return;
-    }
-    hideAlert('pageAlert');
-    try {
-        await api.del(`/api/production/work-orders/${id}`);
-
-        // Close the stage-history panel if it was showing the deleted work order.
-        const detailId = document.getElementById('detailWorkOrderId');
-        if (detailId && detailId.textContent === String(id)) {
-            closeStageDetail();
+    await UI.confirm({
+        title: 'Permanently Delete Work Order?',
+        message: 'You are about to permanently delete work order #' + id + '.',
+        details: [{ text: 'Its production stage history will also be removed.', muted: true }],
+        warning: 'This action cannot be undone.',
+        variant: 'danger', icon: 'fa-trash-alt', confirmText: 'Delete Permanently', busyText: 'Deleting…',
+        onConfirm: async () => {
+            try {
+                await api.del(`/api/production/work-orders/${id}`);
+                const detailId = document.getElementById('detailWorkOrderId');
+                if (detailId && detailId.textContent === String(id)) closeStageDetail();
+                UI.success(`Work order #${id} permanently deleted.`);
+                await loadWorkOrders();
+                await loadConfirmedOrdersIntoDropdown();
+                await checkBottleneckBanner();
+            } catch (err) {
+                UI.error('Could not permanently delete work order: ' + err.message);
+                await loadWorkOrders();
+            }
         }
-
-        showAlert('pageAlert', `Work order #${id} permanently deleted.`, 'success');
-        await loadWorkOrders();
-        await loadConfirmedOrdersIntoDropdown();
-        await checkBottleneckBanner();
-    } catch (err) {
-        showAlert('pageAlert', 'Could not permanently delete work order: ' + err.message, 'error');
-        await loadWorkOrders();
-    }
+    });
 }
 
 // ---- PBI-19: bottleneck alert banner ----

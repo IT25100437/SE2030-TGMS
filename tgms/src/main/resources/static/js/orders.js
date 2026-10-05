@@ -68,7 +68,7 @@ function renderCustomers(customers) {
 
     if (!customers.length) {
         tbody.innerHTML =
-            '<tr><td colspan="5" class="small-text">No customers registered yet.</td></tr>';
+            UI.emptyRow(5, { icon:'fa-users', title:'No customers registered yet', text:'Register a customer above to create orders.' });
         return;
     }
 
@@ -153,41 +153,24 @@ document.getElementById('editCustomerForm').addEventListener('submit', async (e)
 
 // ---- Permanent delete customer (row is really removed from SQL Server) ----
 async function permanentlyDeleteCustomer(id) {
-
-    if (!confirm(
-        'Are you sure you want to permanently delete this customer? ' +
-        'The customer record will be removed from the database. ' +
-        'This action cannot be undone.\n\n' +
-        '(Customers who already have orders cannot be deleted.)'
-    )) {
-        return;
-    }
-
-    hideAlert('pageAlert');
-
-    try {
-
-        await api.del(`/api/customers/${id}`);
-
-        // Close the edit panel if it was showing the deleted customer.
-        if (document.getElementById('editCustomerId').value === String(id)) {
-            cancelEditCustomer();
+    await UI.confirm({
+        title: 'Permanently Delete Customer?',
+        message: 'You are about to permanently delete customer #' + id + '.',
+        details: [{ text: 'Customers with existing orders cannot be deleted.', muted: true }],
+        warning: 'This action cannot be undone.',
+        variant: 'danger', icon: 'fa-trash-alt', confirmText: 'Delete Permanently', busyText: 'Deleting…',
+        onConfirm: async () => {
+            try {
+                await api.del(`/api/customers/${id}`);
+                if (document.getElementById('editCustomerId').value === String(id)) cancelEditCustomer();
+                UI.success('Customer permanently deleted.');
+                await loadCustomersIntoDropdown();
+            } catch (err) {
+                UI.error('Could not permanently delete customer: ' + err.message);
+                await loadCustomersIntoDropdown();
+            }
         }
-
-        showAlert('pageAlert', 'Customer permanently deleted.', 'success');
-
-        await loadCustomersIntoDropdown();
-
-    } catch (err) {
-
-        showAlert(
-            'pageAlert',
-            'Could not permanently delete customer: ' + err.message,
-            'error'
-        );
-
-        await loadCustomersIntoDropdown();
-    }
+    });
 }
 
 // ---- Load inventory items ----
@@ -363,7 +346,7 @@ function renderOrders(orders) {
 
     if (!orders.length) {
         tbody.innerHTML =
-            '<tr><td colspan="6" class="small-text">No orders found.</td></tr>';
+            UI.emptyRow(6, { icon:'fa-file-invoice', title:'No orders found', text:'Create a customer order to see it here.' });
 
         return;
     }

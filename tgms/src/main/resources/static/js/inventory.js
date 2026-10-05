@@ -333,12 +333,12 @@ function renderItems(items) {
 
     if (!items.length) {
 
-        tbody.innerHTML =
-            '<tr>' +
-            '<td colspan="8" class="small-text">' +
-            'No inventory items found.' +
-            '</td>' +
-            '</tr>';
+        tbody.innerHTML = UI.emptyRow(8, {
+            icon: 'fa-boxes',
+            title: 'No inventory items found',
+            text: 'Add an inventory item or change your search filters.',
+            compact: true
+        });
 
         return;
     }
@@ -475,56 +475,28 @@ async function removeItem(id) {
 // =====================================================
 
 async function permanentlyDeleteItem(id) {
-
-    if (!confirm(
-        'Are you sure you want to permanently delete this inventory item? ' +
-        'The item and its stock movement history will be removed from the ' +
-        'database. This action cannot be undone.\n\n' +
-        '(To keep the record, use Remove instead.)'
-    )) {
-        return;
-    }
-
-    hideAlert('pageAlert');
-
-    try {
-
-        await api.del(
-            `/api/inventory/${id}/permanent`
-        );
-
-        // Close any panel that was showing the deleted item.
-        if (currentItemId === id) {
-            closeMovementPanel();
+    await UI.confirm({
+        title: 'Permanently Delete Inventory Item?',
+        message: 'You are about to permanently delete inventory item #' + id + '.',
+        details: [{ text: 'Its stock movement history will also be removed.', muted: true }],
+        warning: 'This action cannot be undone. To keep the record, use Remove instead.',
+        variant: 'danger', icon: 'fa-trash-alt', confirmText: 'Delete Permanently', busyText: 'Deleting…',
+        onConfirm: async () => {
+            try {
+                await api.del(`/api/inventory/${id}/permanent`);
+                if (currentItemId === id) closeMovementPanel();
+                if (document.getElementById('editItemId').value === String(id)) cancelEditItem();
+                UI.success('Inventory item permanently deleted.');
+                await loadItems();
+                await checkLowStockBanner();
+            } catch (err) {
+                UI.error('Could not permanently delete item: ' + err.message);
+                await loadItems();
+            }
         }
-
-        if (document.getElementById('editItemId').value === String(id)) {
-            cancelEditItem();
-        }
-
-        showAlert(
-            'pageAlert',
-            'Inventory item permanently deleted.',
-            'success'
-        );
-
-        await loadItems();
-        await checkLowStockBanner();
-
-    } catch (err) {
-
-        showAlert(
-            'pageAlert',
-            'Could not permanently delete item: ' + err.message,
-            'error'
-        );
-
-        await loadItems();
-    }
+    });
 }
 
-
-// =====================================================
 // PBI-06: STOCK MOVEMENTS
 // =====================================================
 
@@ -583,12 +555,12 @@ async function loadMovementHistory() {
 
         if (!movements.length) {
 
-            tbody.innerHTML =
-                '<tr>' +
-                '<td colspan="4" class="small-text">' +
-                'No movements recorded yet.' +
-                '</td>' +
-                '</tr>';
+            tbody.innerHTML = UI.emptyRow(4, {
+                icon: 'fa-exchange-alt',
+                title: 'No movements recorded yet',
+                text: 'Record a stock-in or stock-out movement for this item.',
+                compact: true
+            });
 
             return;
         }

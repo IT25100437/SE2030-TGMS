@@ -189,7 +189,7 @@ function renderEmployees(employees) {
     if (!employees.length) {
 
         tbody.innerHTML =
-            '<tr><td colspan="6" class="small-text">No employees found.</td></tr>';
+            UI.emptyRow(6, { icon:'fa-users', title:'No employees found', text:'Register an employee to start building your workforce.' });
 
         return;
     }
@@ -310,55 +310,27 @@ async function deactivateEmployee(id) {
 // (separate from PBI-24 deactivate - the row is really removed)
 // ===============================
 async function permanentlyDeleteEmployee(id) {
-
-    if (!confirm(
-        'Are you sure you want to permanently delete this employee? ' +
-        'The employee and all of their attendance records will be removed ' +
-        'from the database. This action cannot be undone.\n\n' +
-        '(To keep the record, use Deactivate instead.)'
-    )) {
-        return;
-    }
-
-    hideAlert('pageAlert');
-
-    try {
-
-        await api.del(
-            `/api/employees/${id}/permanent`
-        );
-
-        // Close any panel/form that was showing the deleted employee.
-        if (currentAttendanceEmployeeId === id) {
-            closeAttendancePanel();
+    await UI.confirm({
+        title: 'Permanently Delete Employee?',
+        message: 'You are about to permanently delete employee #' + id + '.',
+        details: [{ text: 'All attendance records for this employee will also be removed.', muted: true }],
+        warning: 'This action cannot be undone. To keep the record, use Deactivate instead.',
+        variant: 'danger', icon: 'fa-trash-alt', confirmText: 'Delete Permanently', busyText: 'Deleting…',
+        onConfirm: async () => {
+            try {
+                await api.del(`/api/employees/${id}/permanent`);
+                if (currentAttendanceEmployeeId === id) closeAttendancePanel();
+                if (document.getElementById('e_id').value === String(id)) resetEmployeeForm();
+                UI.success('Employee permanently deleted.');
+                await loadEmployees();
+            } catch (err) {
+                UI.error('Could not permanently delete employee: ' + err.message);
+                await loadEmployees();
+            }
         }
-
-        if (document.getElementById('e_id').value === String(id)) {
-            resetEmployeeForm();
-        }
-
-        showAlert(
-            'pageAlert',
-            'Employee permanently deleted.',
-            'success'
-        );
-
-        await loadEmployees();
-
-    } catch (err) {
-
-        showAlert(
-            'pageAlert',
-            'Could not permanently delete employee: ' + err.message,
-            'error'
-        );
-
-        await loadEmployees();
-    }
+    });
 }
 
-
-// ===============================
 // PBI-22
 // OPEN ATTENDANCE PANEL
 // ===============================
