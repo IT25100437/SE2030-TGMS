@@ -2184,3 +2184,127 @@ tbody tr:hover { background: #f3f8ff; }
     60%  { box-shadow: 0 0 0 6px rgba(14, 47, 118, 0.12); border-color: var(--primary); }
     100% { box-shadow: var(--shadow-sm); }
 }
+
+
+/* ============================================================
+   READABILITY THEME  (added last so it overrides the rules above)
+   Goals: softer page background, gentler borders, higher-contrast
+   text, larger small-print, sentence-case form labels, and a brand
+   look (navy + gold) that matches the new login page.
+   ============================================================ */
+:root {
+    --bg:            #f3f6fb;
+    --primary-bg:    #eaf0fb;
+    --dark:          #0f1b33;
+    --dark-2:        #1a2b4a;
+    --text:          #1f2b3d;
+    --muted:         #55667d;
+    --border:        #dbe3ef;
+    --border-light:  #ebf0f7;
+    --gold:          #E0B65A;
+    --ink:           #081a43;
+    --shadow-sm:     0 1px 2px rgba(15,27,51,.05), 0 2px 6px rgba(15,27,51,.04);
+    --shadow-md:     0 8px 22px rgba(15,27,51,.09);
+    --radius-lg:     14px;
+}
+
+body { font-size: 15px; background: var(--bg); color: var(--text); }
+.content { background: var(--bg); }
+
+/* keyboard focus is always visible */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid rgba(14,47,118,.35);
+    outline-offset: 2px;
+}
+
+/* ---------- Top bar & sidebar ---------- */
+.topbar { border-bottom-color: var(--border); box-shadow: 0 1px 0 rgba(15,27,51,.04); }
+.topbar-logo, .sidebar-brand-logo { background: var(--gold); color: var(--ink); }
+.topbar-title span:first-child { font-size: 16px; }
+.topbar-title span:last-child { font-size: 12px; letter-spacing: 0; }
+.user-details .user-name { font-size: 14px; }
+.user-details .user-role { font-size: 12px; }
+.topbar button.logout-btn { font-size: 13.5px; padding: 8px 14px; }
+
+.sidebar { border-right-color: var(--border); }
+.sidebar-section-label { font-size: 11.5px; letter-spacing: 1.2px; color: #6a7b92; padding-top: 18px; }
+.sidebar a { font-size: 14.5px; color: #33445e; padding: 11px 20px; }
+.sidebar a:hover { background: #f1f5fc; color: var(--primary); }
+.sidebar a.active { background: #e6eefb; color: var(--primary); font-weight: 600; }
+.sidebar-user { border-top-color: var(--border); }
+.sidebar-user-heading { font-size: 11.5px; }
+.sidebar-user-name { font-size: 14px; }
+.sidebar-user-role { font-size: 12.5px; }
+
+/* ---------- Page headings ---------- */
+.page-header { border-bottom-color: var(--border); }
+.page-header .page-label { font-size: 12px; letter-spacing: 1.2px; }
+.page-header h2 { font-size: 26px; letter-spacing: -.01em; }
+.page-header .page-desc { font-size: 14.5px; }
+
+/* ---------- Cards ---------- */
+.card { border-color: var(--border); box-shadow: var(--shadow-sm); }
+.card h3, .card .section-header h3, .section-header h3 { font-size: 17px; }
+.section-icon { font-size: 16px; }
+.section-desc, .section-intro { font-size: 14px; }
+.card h4 { font-size: 15px; }
+
+/* ---------- Dashboard ---------- */
+.welcome-card {
+    background: linear-gradient(120deg, #0E2F76 0%, #1b4aa6 100%);
+    box-shadow: inset 0 -4px 0 var(--gold);
+}
+.welcome-card::before { background: rgba(255,255,255,.08); }
+.welcome-card::after  { background: rgba(224,182,90,.18); }
+.welcome-card h2 { font-size: 24px; }
+.welcome-card .welcome-eyebrow { font-size: 13px; color: rgba(255,255,255,.8); }
+.welcome-card .welcome-sub { font-size: 15.5px; color: rgba(255,255,255,.92); }
+.welcome-card .role-badge { font-size: 12px; background: rgba(255,255,255,.18); color: #fff; }
+
+.dashboard-kpi { border-color: var(--border); }
+.dashboard-kpi .dkpi-label { font-size: 14px; color: var(--text); font-weight: 600; }
+.dashboard-kpi .dkpi-sub { font-size: 13px; color: var(--muted); }
+.dashboard-kpi .dkpi-icon { width: 42px; height: 42px; font-size: 18px; border-radius: 10px; }
+@media (min-width: 769px) {
+    .dashboard-kpi .dkpi-value { font-size: 34px; margin-bottom: 6px; }
+}
+
+.quick-action { border-color: var(--border); }
+.quick-action .qa-text strong { font-size: 15px; }
+.quick-action .qa-text span { font-size: 13.5px; }
+.quick-action.primary .qa-text span { color: rgba(255,255,255,.88); }
+.quick-action .qa-icon { border-radius: 10px; }
+
+.activity-title { font-size: 15px; }
+.activity-meta, .activity-side { font-size: 13.5px; }
+.dash-widget-note { font-size: 13px; }
+
+.module-link-card { border-color: var(--border); }
+.module-link-card .mlc-text strong { font-size: 15.5px; }
+.module-link-card .mlc-text span { font-size: 13.5px; }
+.module-link-card .mlc-icon { background: var(--primary-bg); border-radius: 10px; }
+
+/* ---------- Forms & buttons ---------- */
+label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+    text-transform: none;
+    letter-spacing: 0;
+    margin-bottom: 6px;
+}
+input, select, textarea { border: 1.5px solid #c5d2e4; font-size: 14.5px; padding: 10px 12px; }
+input::placeholder, textarea::placeholder { color: #8493a8; }
+button, .btn { font-size: 14px; letter-spacing: 0; padding: 10px 18px; }
+.link-btn { font-size: 14px; }
+button.secondary, .btn-secondary { border-color: #c5d2e4; }
+.table-actions button { font-size: 13px; }
+
+/* ---------- Tables & badges ---------- */
+table { font-size: 14.5px; }
+thead th { font-size: 12px; color: #435470; background: #f3f6fb; border-bottom-color: var(--border); letter-spacing: .6px; }
+tbody td { padding: 13px 14px; border-bottom-color: var(--border-light); }
+tbody tr:hover { background: #f6f9fe; }
+.badge { font-size: 12px; padding: 4px 11px; letter-spacing: .3px; }
+.stat-pill .sp-label { font-size: 12px; color: var(--muted); }
+.small-text { font-size: 13px; }
