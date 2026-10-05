@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGMS – Order Management</title>
+    <meta name="description" content="Manage customer orders, invoices, delivery status and the complete order lifecycle.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <script>window.ACTIVE_MODULE = 'orders';</script>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar" role="banner">
+    <div class="topbar-brand">
+        <button class="hamburger" id="sidebarToggle" aria-label="Toggle sidebar" style="display:flex; margin-right:4px;">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="topbar-logo" aria-hidden="true">TG</div>
+        <div class="topbar-title">
+            <span>TGMS</span>
+            <span>Textile &amp; Garment Management</span>
+        </div>
+    </div>
+    <div class="user-info">
+        <div class="user-avatar" id="userAvatar" aria-hidden="true">U</div>
+        <div class="user-details">
+            <span class="user-name" id="userLabel">Loading...</span>
+            <span class="user-role" id="userRoleLabel"></span>
+        </div>
+        <button class="logout-btn" onclick="logout()" aria-label="Log out">
+            <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+            Log Out
+        </button>
+    </div>
+</header>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar" role="navigation" aria-label="Module navigation">
+        <div class="sidebar-section-label">Navigation</div>
+    </nav>
+    <div id="sidebarOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:299;"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+
+        <div class="page-header">
+            <div class="page-label">Order Management</div>
+            <h2>Customer Orders &amp; Invoices</h2>
+            <p class="page-desc">Create orders, confirm and generate invoices, track status and manage the complete order lifecycle.</p>
+        </div>
+
+        <div id="pageAlert" class="alert hidden" role="alert"></div>
+
+        <!-- Register Customer -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-user-plus" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Register a Customer</h3>
+            </div>
+            <p class="small-text" style="margin-bottom:14px; color:var(--muted);">
+                Customers are external stakeholders (no login). Register them here so you can place orders against their name.
+            </p>
+            <form id="customerForm" novalidate>
+                <div class="form-grid">
+                    <div>
+                        <label for="cu_name">Customer Name</label>
+                        <input type="text" id="cu_name" required placeholder="e.g. Lanka Fashion Pvt Ltd">
+                    </div>
+                    <div>
+                        <label for="cu_contact">Contact</label>
+                        <input type="text" id="cu_contact" required placeholder="e.g. +94 77 000 0000">
+                    </div>
+                    <div>
+                        <label for="cu_address">Address</label>
+                        <input type="text" id="cu_address" required placeholder="e.g. No. 1, Galle Road, Colombo">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="primary">
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                        Register Customer
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Registered Customers -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-users" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Registered Customers</h3>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Contact</th>
+                            <th>Address</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customerTableBody">
+                        <tr><td colspan="5" class="small-text" style="padding:20px;">Loading customers…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Edit Customer -->
+        <div class="card hidden" id="editCustomerPanel">
+            <div class="card-header">
+                <h3><i class="fas fa-edit" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Edit Customer — <span id="editCustomerTitle"></span></h3>
+            </div>
+            <form id="editCustomerForm" novalidate>
+                <input type="hidden" id="editCustomerId">
+                <div class="form-grid">
+                    <div>
+                        <label for="editCustomerName">Customer Name</label>
+                        <input type="text" id="editCustomerName" required>
+                    </div>
+                    <div>
+                        <label for="editCustomerContact">Contact</label>
+                        <input type="text" id="editCustomerContact" required>
+                    </div>
+                    <div>
+                        <label for="editCustomerAddress">Address</label>
+                        <input type="text" id="editCustomerAddress" required>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="primary">
+                        <i class="fas fa-save" aria-hidden="true"></i>
+                        Update Customer
+                    </button>
+                    <button type="button" class="secondary" onclick="cancelEditCustomer()">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Create Order -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-file-invoice" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Create New Order</h3>
+            </div>
+            <form id="orderForm" novalidate>
+                <div style="margin-bottom:14px;">
+                    <label for="o_customer">Customer</label>
+                    <select id="o_customer" required></select>
+                </div>
+                <h4 style="margin:16px 0 12px;">Order Items</h4>
+                <div id="orderItemsContainer"></div>
+                <button type="button" class="secondary" onclick="addOrderItemRow()" style="margin-bottom:14px;">
+                    <i class="fas fa-plus" aria-hidden="true"></i>
+                    Add Item
+                </button>
+                <div class="form-actions">
+                    <button type="submit" class="primary">
+                        <i class="fas fa-file-plus" aria-hidden="true"></i>
+                        Create Order (Draft)
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Order List -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-list-alt" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Orders</h3>
+            </div>
+            <div class="filters">
+                <div>
+                    <label for="f_status">Filter by status</label>
+                    <select id="f_status">
+                        <option value="">All</option>
+                        <option value="DRAFT">Draft</option>
+                        <option value="CONFIRMED">Confirmed</option>
+                        <option value="SHIPPED">Shipped</option>
+                        <option value="DELIVERED">Delivered</option>
+                        <option value="CANCELLED">Cancelled</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:8px; align-items:flex-end; flex:none;">
+                    <button class="primary" onclick="loadOrders()">
+                        <i class="fas fa-filter" aria-hidden="true"></i>
+                        Filter
+                    </button>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderTableBody">
+                        <tr><td colspan="6" class="small-text" style="padding:20px;">Loading orders…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Order Details Panel -->
+        <div class="card hidden" id="orderDetailPanel">
+            <div class="card-header">
+                <h3><i class="fas fa-receipt" style="color:var(--primary);margin-right:8px;font-size:15px;" aria-hidden="true"></i>Order #<span id="detailOrderId"></span></h3>
+                <button class="link-btn" onclick="closeOrderDetail()">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    Back to order list
+                </button>
+            </div>
+            <div id="orderDetailBody"></div>
+        </div>
+
+    </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script>initLayout();</script>
+<script src="/js/orders.js"></script>
+
+</body>
+</html>
