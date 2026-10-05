@@ -634,8 +634,109 @@ const UI = (function () {
         }
     }, true);
 
+    /* =========================================================
+       TABLE PAGINATION  ("Showing 1 to 10 of 30 entries" + rows per page)
+       Applied automatically to every `.table-wrap > table` (except tables marked
+       .compact or data-no-paginate). Purely visual: it only hides/shows rows that
+       the page scripts already rendered, so search/filter/CRUD behave as before.
+       ========================================================= */
+
+    const PAGE_SIZES = [5, 10, 25, 50];
+
+    function initPager(wrap) {
+        if (wrap.dataset.pager === '1') return;
+        const table = wrap.querySelector(':scope > table');
+        if (!table || table.classList.contains('compact') || table.hasAttribute('data-no-paginate')) return;
+        const tbody = table.tBodies[0];
+        if (!tbody) return;
+        wrap.dataset.pager = '1';
+
+        const state = { page: 1, size: 10 };
+        const footer = document.createElement('div');
+        footer.className = 'table-footer hidden';
+        wrap.insertAdjacentElement('afterend', footer);
+
+        function dataRows() {
+            return Array.from(tbody.rows).filter(r => !r.classList.contains('state-row'));
+        }
+
+        function pageNumbers(pages, current) {
+            if (pages <= 7) return Array.from({ length: pages }, (_, i) => i + 1);
+            const set = new Set([1, 2, pages - 1, pages, current - 1, current, current + 1]);
+            const list = Array.from(set).filter(n => n >= 1 && n <= pages).sort((a, b) => a - b);
+            const out = [];
+            list.forEach((n, i) => {
+                if (i && n - list[i - 1] > 1) out.push('…');
+                out.push(n);
+            });
+            return out;
+        }
+
+        function render() {
+            const rows = dataRows();
+            const total = rows.length;
+            if (!total) state.page = 1;
+
+            const pages = Math.max(1, Math.ceil(total / state.size));
+            if (state.page > pages) state.page = pages;
+            const start = (state.page - 1) * state.size;
+            const end = Math.min(start + state.size, total);
+
+            rows.forEach((r, i) => r.classList.toggle('pg-hidden', i < start || i >= start + state.size));
+
+            if (total <= PAGE_SIZES[0]) {
+                rows.forEach(r => r.classList.remove('pg-hidden'));
+                footer.classList.add('hidden');
+                footer.innerHTML = '';
+                return;
+            }
+
+            const buttons = pageNumbers(pages, state.page).map(n => n === '…'
+                ? '<span class="pager-gap" aria-hidden="true">…</span>'
+                : '<button type="button" class="pager-btn' + (n === state.page ? ' active' : '') + '" data-page="' + n + '"' +
+                  ' aria-label="Page ' + n + '"' + (n === state.page ? ' aria-current="page"' : '') + '>' + n + '</button>').join('');
+
+            footer.innerHTML =
+                '<div class="table-count">Showing ' + (start + 1) + ' to ' + end + ' of ' + total + ' entries</div>' +
+                '<nav class="pager" aria-label="Table pagination">' +
+                  '<button type="button" class="pager-btn" data-page="' + (state.page - 1) + '" aria-label="Previous page"' + (state.page === 1 ? ' disabled' : '') + '><i class="fas fa-chevron-left" aria-hidden="true"></i></button>' +
+                  buttons +
+                  '<button type="button" class="pager-btn" data-page="' + (state.page + 1) + '" aria-label="Next page"' + (state.page === pages ? ' disabled' : '') + '><i class="fas fa-chevron-right" aria-hidden="true"></i></button>' +
+                '</nav>' +
+                '<label class="rows-select">Rows per page ' +
+                  '<select aria-label="Rows per page">' +
+                    PAGE_SIZES.map(n => '<option value="' + n + '"' + (n === state.size ? ' selected' : '') + '>' + n + '</option>').join('') +
+                  '</select></label>';
+            footer.classList.remove('hidden');
+        }
+
+        footer.addEventListener('click', e => {
+            const btn = e.target.closest('[data-page]');
+            if (!btn || btn.disabled) return;
+            state.page = Number(btn.dataset.page);
+            render();
+            wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+        footer.addEventListener('change', e => {
+            if (e.target.matches('select')) {
+                state.size = Number(e.target.value);
+                state.page = 1;
+                render();
+            }
+        });
+
+        // Re-apply whenever the page script re-renders the table body.
+        new MutationObserver(render).observe(tbody, { childList: true });
+        render();
+    }
+
+    function initAllPagers() {
+        document.querySelectorAll('.table-wrap').forEach(initPager);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         markRequiredLabels();
+        initAllPagers();
         setTimeout(focusFromHash, 250);
     });
 
@@ -657,6 +758,8 @@ const UI = (function () {
         statusBadge, stageTracker,
         // formatting
         formatDate, formatDateTime, formatMoney, todayString, datePart, parseDate,
+        // tables
+        initPager,
         // misc
         focusFromHash
     };

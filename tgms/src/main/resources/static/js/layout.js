@@ -1,36 +1,35 @@
 /**
- * layout.js — shared topbar + sidebar initialisation for all pages
+ * layout.js — shared topbar + sidebar for all pages
  * (dashboard, suppliers, inventory, orders, production, employees, reports).
  *
- * USAGE: include this after api.js, before the module-specific script, then call
- * initLayout(). The calling page must set: window.ACTIVE_MODULE (string key,
- * e.g. 'suppliers', or 'dashboard' for the dashboard page).
+ * USAGE: include after api.js / ui.js, before the module script, then call
+ * initLayout(). The page must set window.ACTIVE_MODULE (e.g. 'suppliers').
  *
- * Sidebar structure:
- *   MAIN        -> Dashboard
- *   OPERATIONS  -> Supplier / Inventory / Order / Production / Employee Management
- *   ANALYTICS   -> Reports & Analytics
- *   (footer)    -> logged-in user's name and role
+ * Sidebar:  MAIN -> Dashboard | OPERATIONS -> module pages | ANALYTICS -> Reports
+ * Topbar:   menu button (mobile), page search (Ctrl+K), today's date, notifications,
+ *           logged-in user and Log Out.
  *
- * This preserves FULL existing role-based access control (the `roles` arrays below
- * are unchanged) — it only adds UI chrome.
+ * Role-based access is unchanged: the `roles` arrays below decide which modules a
+ * user sees, exactly as before. This file only controls the look of the shell.
  */
 
 window.ACTIVE_MODULE = window.ACTIVE_MODULE || '';
 
 const MODULE_NAV = [
-    { key: 'suppliers',  section: 'OPERATIONS', href: '/suppliers.html',  icon: 'fas fa-truck',        label: 'Supplier Management',  roles: ['PROCUREMENT_OFFICER','ADMIN'] },
-    { key: 'inventory',  section: 'OPERATIONS', href: '/inventory.html',  icon: 'fas fa-boxes',        label: 'Inventory Management', roles: ['INVENTORY_MANAGER','ADMIN'] },
-    { key: 'orders',     section: 'OPERATIONS', href: '/orders.html',     icon: 'fas fa-file-invoice', label: 'Order Management',     roles: ['SALES_OFFICER','ADMIN'] },
-    { key: 'production', section: 'OPERATIONS', href: '/production.html', icon: 'fas fa-industry',     label: 'Production Management',roles: ['PRODUCTION_MANAGER','ADMIN'] },
-    { key: 'employees',  section: 'OPERATIONS', href: '/employees.html',  icon: 'fas fa-users',        label: 'Employee Management',  roles: ['HR_MANAGER','ADMIN'] },
-    { key: 'reports',    section: 'ANALYTICS',  href: '/reports.html',    icon: 'fas fa-chart-bar',    label: 'Reports & Analytics',  roles: ['ADMIN'] },
+    { key: 'suppliers',  section: 'OPERATIONS', href: '/suppliers.html',  icon: 'fas fa-truck',        label: 'Supplier Management',   keywords: 'supplier contract procurement material', roles: ['PROCUREMENT_OFFICER','ADMIN'] },
+    { key: 'inventory',  section: 'OPERATIONS', href: '/inventory.html',  icon: 'fas fa-boxes',        label: 'Inventory Management',  keywords: 'inventory stock item sku warehouse low',  roles: ['INVENTORY_MANAGER','ADMIN'] },
+    { key: 'orders',     section: 'OPERATIONS', href: '/orders.html',     icon: 'fas fa-file-invoice', label: 'Order Management',      keywords: 'order customer invoice sales delivery',   roles: ['SALES_OFFICER','ADMIN'] },
+    { key: 'production', section: 'OPERATIONS', href: '/production.html', icon: 'fas fa-industry',     label: 'Production Management', keywords: 'production work order stage line output', roles: ['PRODUCTION_MANAGER','ADMIN'] },
+    { key: 'employees',  section: 'OPERATIONS', href: '/employees.html',  icon: 'fas fa-users',        label: 'Employee Management',   keywords: 'employee attendance hr staff workforce',  roles: ['HR_MANAGER','ADMIN'] },
+    { key: 'reports',    section: 'ANALYTICS',  href: '/reports.html',    icon: 'fas fa-chart-bar',    label: 'Reports & Analytics',   keywords: 'report analytics kpi export pdf excel',   roles: ['ADMIN'] },
 ];
 
 // Dashboard is available to every logged-in user.
-const DASHBOARD_NAV = { key: 'dashboard', section: 'MAIN', href: '/dashboard.html', icon: 'fas fa-th-large', label: 'Dashboard' };
+const DASHBOARD_NAV = { key: 'dashboard', section: 'MAIN', href: '/dashboard.html', icon: 'fas fa-th-large', label: 'Dashboard', keywords: 'dashboard home overview' };
 
 const NAV_SECTIONS = ['MAIN', 'OPERATIONS', 'ANALYTICS'];
+
+let searchableNav = [DASHBOARD_NAV];
 
 function formatRole(role) {
     const map = {
@@ -60,7 +59,147 @@ function renderNavLink(item) {
     `;
 }
 
+/* =========================================================
+   TOPBAR  (built here so every page gets the same header)
+   ========================================================= */
+function buildTopbar() {
+    const bar = document.querySelector('.topbar');
+    if (!bar || bar.dataset.built === '1') return;
+    bar.dataset.built = '1';
+
+    const today = new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+    bar.innerHTML = `
+        <div class="topbar-brand">
+            <button class="hamburger" id="sidebarToggle" aria-label="Toggle sidebar" aria-controls="sidebar">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="topbar-logo" aria-hidden="true">TG</div>
+        </div>
+
+        <div class="topbar-search" role="search">
+            <i class="fas fa-search ts-icon" aria-hidden="true"></i>
+            <input type="search" id="globalSearch" placeholder="Search modules and pages…" autocomplete="off"
+                   aria-label="Search modules and pages" aria-controls="searchResults" aria-expanded="false">
+            <kbd class="ts-kbd" aria-hidden="true">Ctrl K</kbd>
+            <div class="search-results hidden" id="searchResults" role="listbox"></div>
+        </div>
+
+        <div class="user-info">
+            <div class="date-chip" title="Today">
+                <i class="far fa-calendar-alt" aria-hidden="true"></i>
+                <span>${navEscape(today)}</span>
+            </div>
+
+            <div class="notif-wrap">
+                <button type="button" class="icon-btn" id="notifBell" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
+                    <i class="far fa-bell" aria-hidden="true"></i>
+                </button>
+                <div class="notif-pop hidden" id="notifPop" role="status">
+                    <div class="notif-title">Notifications</div>
+                    <div class="notif-empty"><i class="far fa-check-circle" aria-hidden="true"></i> You're all caught up.</div>
+                </div>
+            </div>
+
+            <div class="user-chip">
+                <div class="user-avatar" id="userAvatar" aria-hidden="true">U</div>
+                <div class="user-details">
+                    <span class="user-name" id="userLabel">Loading...</span>
+                    <span class="user-role" id="userRoleLabel"></span>
+                </div>
+            </div>
+
+            <button type="button" class="logout-btn" onclick="logout()" aria-label="Log out">
+                <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                <span class="logout-text">Log Out</span>
+            </button>
+        </div>
+    `;
+
+    wireSearch();
+    wireNotifications();
+}
+
+function wireNotifications() {
+    const bell = document.getElementById('notifBell');
+    const pop = document.getElementById('notifPop');
+    if (!bell || !pop) return;
+
+    function setOpen(open) {
+        pop.classList.toggle('hidden', !open);
+        bell.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    bell.addEventListener('click', e => { e.stopPropagation(); setOpen(pop.classList.contains('hidden')); });
+    document.addEventListener('click', e => { if (!pop.contains(e.target) && e.target !== bell) setOpen(false); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
+}
+
+function wireSearch() {
+    const input = document.getElementById('globalSearch');
+    const box = document.getElementById('searchResults');
+    if (!input || !box) return;
+
+    let results = [];
+    let active = -1;
+
+    function close() {
+        box.classList.add('hidden');
+        input.setAttribute('aria-expanded', 'false');
+        active = -1;
+    }
+
+    function highlight() {
+        Array.from(box.querySelectorAll('a')).forEach((a, i) => a.classList.toggle('is-active', i === active));
+    }
+
+    function render() {
+        const q = input.value.trim().toLowerCase();
+        if (!q) { close(); return; }
+
+        results = searchableNav.filter(item =>
+            (item.label + ' ' + (item.keywords || '')).toLowerCase().includes(q));
+
+        box.innerHTML = results.length
+            ? results.map(item => `
+                <a href="${item.href}" role="option">
+                    <i class="${item.icon}" aria-hidden="true"></i>
+                    <span>${item.label}</span>
+                </a>`).join('')
+            : '<div class="search-empty">No matching pages.</div>';
+
+        box.classList.remove('hidden');
+        input.setAttribute('aria-expanded', 'true');
+        active = results.length ? 0 : -1;
+        highlight();
+    }
+
+    input.addEventListener('input', render);
+    input.addEventListener('focus', render);
+    input.addEventListener('keydown', e => {
+        if (e.key === 'ArrowDown' && results.length) { e.preventDefault(); active = (active + 1) % results.length; highlight(); }
+        else if (e.key === 'ArrowUp' && results.length) { e.preventDefault(); active = (active - 1 + results.length) % results.length; highlight(); }
+        else if (e.key === 'Enter' && active >= 0 && results[active]) { e.preventDefault(); window.location.href = results[active].href; }
+        else if (e.key === 'Escape') { close(); input.blur(); }
+    });
+
+    document.addEventListener('click', e => { if (!e.target.closest('.topbar-search')) close(); });
+
+    // Ctrl+K / Cmd+K focuses the search box.
+    document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            input.focus();
+            input.select();
+        }
+    });
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
 async function initLayout() {
+    buildTopbar();
+
     const user = await requireLogin();
     if (!user) return null;
 
@@ -68,34 +207,29 @@ async function initLayout() {
     const roleText    = formatRole(user.role);
     const firstLetter = displayName[0].toUpperCase();
 
-    // ---- TOPBAR ----
-    const avatarEl     = document.getElementById('userAvatar');
-    const labelEl      = document.getElementById('userLabel');
-    const roleEl       = document.getElementById('userRoleLabel');
-
-    const userInfoEl   = document.querySelector('.topbar .user-info');
-    if (userInfoEl && !document.getElementById('notifBell')) {
-        const notifHtml = `<div id="notifBell" class="notif-btn" title="Notifications" aria-label="Notifications" style="position:relative; cursor:pointer; width:34px; height:34px; border-radius:50%; background:var(--primary-bg); color:var(--primary); display:flex; align-items:center; justify-content:center; margin-right:2px;">
-            <i class="fas fa-bell" style="font-size:14px;"></i>
-            <span style="position:absolute; top:7px; right:8px; width:6px; height:6px; background:var(--primary); border-radius:50%;"></span>
-        </div>`;
-        userInfoEl.insertAdjacentHTML('afterbegin', notifHtml);
-    }
+    // ---- TOPBAR user ----
+    const avatarEl = document.getElementById('userAvatar');
+    const labelEl  = document.getElementById('userLabel');
+    const roleEl   = document.getElementById('userRoleLabel');
 
     if (avatarEl) avatarEl.textContent = firstLetter;
     if (labelEl)  labelEl.textContent  = displayName;
     if (roleEl)   roleEl.textContent   = roleText;
 
     // ---- SIDEBAR ----
+    // Only modules the user's role is allowed to see (same rules as before)
+    const allowed = [DASHBOARD_NAV, ...MODULE_NAV.filter(mod => mod.roles.includes(user.role))];
+    searchableNav = allowed;
+
     const sidebar = document.getElementById('sidebar');
     if (sidebar) {
-        // Only modules the user's role is allowed to see (same rules as before)
-        const allowed = [DASHBOARD_NAV, ...MODULE_NAV.filter(mod => mod.roles.includes(user.role))];
-
         let html = `
             <div class="sidebar-brand">
                 <div class="sidebar-brand-logo" aria-hidden="true">TG</div>
-                <div class="sidebar-brand-name">TGMS</div>
+                <div class="sidebar-brand-text">
+                    <div class="sidebar-brand-name">TGMS</div>
+                    <div class="sidebar-brand-tag">Textile &amp; Garment Management</div>
+                </div>
             </div>
             <div class="sidebar-nav">
         `;
@@ -127,15 +261,20 @@ async function initLayout() {
     return user;
 }
 
-// Sidebar mobile toggle (works once DOM is ready)
-document.addEventListener('DOMContentLoaded', function() {
-    const toggle  = document.getElementById('sidebarToggle');
+// Sidebar mobile toggle — uses event delegation because the topbar is built by JS.
+document.addEventListener('click', function (e) {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
+    if (!sidebar) return;
 
-    function openSidebar()  { if (sidebar) sidebar.classList.add('open');    if (overlay) overlay.style.display='block'; }
-    function closeSidebar() { if (sidebar) sidebar.classList.remove('open'); if (overlay) overlay.style.display='none'; }
+    function open()  { sidebar.classList.add('open');    if (overlay) overlay.style.display = 'block'; }
+    function close() { sidebar.classList.remove('open'); if (overlay) overlay.style.display = 'none'; }
 
-    if (toggle)  toggle.addEventListener('click',  () => sidebar && sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
-    if (overlay) overlay.addEventListener('click', closeSidebar);
+    if (e.target.closest('#sidebarToggle')) {
+        sidebar.classList.contains('open') ? close() : open();
+    } else if (e.target.closest('#sidebarOverlay')) {
+        close();
+    } else if (sidebar.classList.contains('open') && e.target.closest('#sidebar a')) {
+        close();
+    }
 });

@@ -57,12 +57,16 @@
 
     <!-- MAIN CONTENT -->
     <main class="content" id="mainContent">
-        <!-- Welcome Card -->
-        <div class="welcome-card" id="welcomeCard">
-            <div class="welcome-eyebrow">Dashboard</div>
-            <h2>Welcome back, <span id="welcomeName">—</span></h2>
-            <p class="welcome-sub" id="welcomeSub">Here's an overview of your management modules and system activity.</p>
-            <div class="role-badge" id="welcomeRole"></div>
+        <!-- Dashboard header -->
+        <div class="page-header dash-header" id="welcomeCard">
+            <div>
+                <h2>Dashboard</h2>
+                <p class="page-desc" id="welcomeSub">Overview of your operations</p>
+            </div>
+            <div class="dash-welcome">
+                <span class="role-badge" id="welcomeRole"></span>
+                <span>Welcome back, <strong id="welcomeName">—</strong></span>
+            </div>
         </div>
 
         <!-- KPI Cards (real data, injected by dashboard.js) -->

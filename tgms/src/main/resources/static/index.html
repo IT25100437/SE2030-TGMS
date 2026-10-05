@@ -194,6 +194,141 @@
             .tg .tg-card { animation-delay: .1s; }
             @keyframes tg-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
         }
+        /* =====================================================
+           GLOW UP  (visual polish only — ids, form and login logic unchanged)
+           ===================================================== */
+        .tg .tg-brand > *:not(.tg-orb) { position: relative; z-index: 1; }
+        .tg .tg-orb { position: absolute; border-radius: 50%; pointer-events: none; z-index: 0; filter: blur(60px); }
+        .tg .tg-brand .tg-orb-1 { width: 380px; height: 380px; top: -120px; right: -80px; background: radial-gradient(circle, rgba(224,182,90,.40), transparent 70%); }
+        .tg .tg-brand .tg-orb-2 { width: 460px; height: 460px; bottom: -180px; left: -120px; background: radial-gradient(circle, rgba(76,125,240,.45), transparent 70%); }
+        .tg .tg-panel .tg-orb { z-index: 0; }
+        .tg .tg-panel .tg-orb-3 { width: 320px; height: 320px; top: -90px; right: -70px; background: radial-gradient(circle, rgba(224,182,90,.35), transparent 70%); }
+        .tg .tg-panel .tg-orb-4 { width: 360px; height: 360px; bottom: -130px; left: -100px; background: radial-gradient(circle, rgba(76,125,240,.28), transparent 70%); }
+
+        /* stitched seam: the gold dashes now "sew" slowly down the edge */
+        .tg .tg-brand::after {
+            border-right: 0; width: 3px; opacity: .95; z-index: 2;
+            background: repeating-linear-gradient(180deg, var(--thread) 0 10px, transparent 10px 18px);
+            background-size: 3px 18px;
+        }
+
+        /* hero */
+        .tg .tg-eyebrow {
+            display: inline-flex; align-items: center; gap: 9px; margin: 0 0 18px;
+            padding: 7px 14px; border-radius: 999px;
+            font-size: 12px; font-weight: 700; letter-spacing: 1.3px; text-transform: uppercase;
+            color: #f6e2ae; background: rgba(224,182,90,.14); border: 1px solid rgba(224,182,90,.45);
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+        }
+        .tg .tg-eyebrow i { font-size: 11px; color: var(--thread); }
+        .tg .tg-hero h1 em {
+            font-style: normal;
+            background: linear-gradient(100deg, #fbe7ae 0%, #E0B65A 55%, #f3cf7c 100%);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; color: transparent;
+            text-shadow: none; filter: drop-shadow(0 2px 18px rgba(224,182,90,.35));
+        }
+        .tg .tg-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+        .tg .tg-chips span {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 8px 14px; border-radius: 999px;
+            font-size: 13px; font-weight: 500; color: #fff;
+            background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22);
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+        }
+        .tg .tg-chips i { color: var(--thread); font-size: 12px; }
+
+        /* module tiles */
+        .tg .tg-modules li {
+            background: linear-gradient(145deg, rgba(255,255,255,.14), rgba(8,26,67,.62));
+            border-color: rgba(255,255,255,.26);
+            box-shadow: 0 8px 24px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.14);
+            transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease, background .25s ease;
+        }
+        .tg .tg-modules li:hover {
+            transform: translateY(-4px);
+            border-color: rgba(224,182,90,.75);
+            background: linear-gradient(145deg, rgba(224,182,90,.20), rgba(8,26,67,.66));
+            box-shadow: 0 16px 34px rgba(0,0,0,.30), 0 0 0 1px rgba(224,182,90,.25), 0 0 28px rgba(224,182,90,.20);
+        }
+        .tg .tg-modules i { box-shadow: 0 6px 14px rgba(224,182,90,.35); transition: transform .25s ease; }
+        .tg .tg-modules li:hover i { transform: scale(1.08) rotate(-4deg); }
+
+        /* sign-in card */
+        .tg .tg-card {
+            position: relative;
+            border-color: rgba(224,182,90,.55);
+            box-shadow: 0 30px 80px rgba(14,47,118,.26), 0 0 0 6px rgba(255,255,255,.45), 0 0 70px rgba(224,182,90,.22);
+        }
+        .tg .tg-lock {
+            display: grid; place-items: center; width: 52px; height: 52px; margin: 0 0 18px;
+            border-radius: 15px; font-size: 21px; color: var(--ink);
+            background: linear-gradient(145deg, #f6dd9a, #E0B65A);
+            box-shadow: 0 10px 22px rgba(224,182,90,.45), inset 0 1px 0 rgba(255,255,255,.55);
+        }
+        .tg .tg-card h2 { font-size: 32px; }
+        .tg .tg-input > i.lead { transition: color .15s; }
+        .tg .tg-input:focus-within > i.lead { color: var(--navy); }
+        .tg .tg-input input:hover:not(:focus) { border-color: #b9c9e2; }
+        .tg .tg-input input:focus { box-shadow: 0 0 0 4px rgba(14,47,118,.12), 0 8px 20px rgba(14,47,118,.10); }
+
+        .tg .tg-caps {
+            display: flex; align-items: center; gap: 8px; margin-top: 8px;
+            font-size: 12.5px; font-weight: 600; color: #92400e;
+        }
+        .tg .tg-caps i { color: #d97706; }
+
+        .tg #loginBtn {
+            position: relative; overflow: hidden;
+            background: linear-gradient(135deg, #1b4aa6 0%, var(--navy) 55%, var(--navy-dark) 100%);
+            box-shadow: 0 12px 26px rgba(14,47,118,.34), inset 0 1px 0 rgba(255,255,255,.18);
+            transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
+        }
+        .tg #loginBtn::after {
+            content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%;
+            background: linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent);
+            transform: skewX(-20deg); transition: left .6s ease;
+        }
+        .tg #loginBtn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 16px 32px rgba(14,47,118,.4), inset 0 1px 0 rgba(255,255,255,.2); filter: brightness(1.05); }
+        .tg #loginBtn:hover:not(:disabled)::after { left: 120%; }
+
+        .tg .tg-help { background: #f6f9fe; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; border-top: 1px solid var(--line); }
+
+        .tg .tg-copy { position: relative; font-size: 12.5px; color: #55667d; text-align: center; }
+        .tg .tg-copy i { color: var(--thread); margin-right: 6px; }
+
+        .tg .tg-card.shake { animation: tg-shake .45s ease both !important; }
+
+        @media (max-width: 900px) {
+            .tg .tg-eyebrow { margin-bottom: 12px; font-size: 11px; }
+            .tg .tg-chips { margin-top: 16px; }
+            .tg .tg-card h2 { font-size: 27px; }
+            .tg .tg-lock { width: 46px; height: 46px; font-size: 19px; margin-bottom: 14px; }
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .tg .tg-brand { animation: tg-pan 40s ease-in-out infinite alternate; }
+            .tg .tg-brand::after { animation: tg-stitch 1.1s linear infinite; }
+            .tg .tg-orb-1 { animation: tg-float 14s ease-in-out infinite alternate; }
+            .tg .tg-orb-2 { animation: tg-float 18s ease-in-out infinite alternate-reverse; }
+            .tg .tg-orb-3 { animation: tg-float 16s ease-in-out infinite alternate; }
+            .tg .tg-orb-4 { animation: tg-float 20s ease-in-out infinite alternate-reverse; }
+            .tg .tg-eyebrow, .tg .tg-chips, .tg .tg-modules li, .tg .tg-copy { animation: tg-in .7s ease-out both; }
+            .tg .tg-chips { animation-delay: .25s; }
+            .tg .tg-modules li:nth-child(1) { animation-delay: .30s; }
+            .tg .tg-modules li:nth-child(2) { animation-delay: .38s; }
+            .tg .tg-modules li:nth-child(3) { animation-delay: .46s; }
+            .tg .tg-modules li:nth-child(4) { animation-delay: .54s; }
+            .tg .tg-modules li:nth-child(5) { animation-delay: .62s; }
+            .tg .tg-modules li:nth-child(6) { animation-delay: .70s; }
+            .tg .tg-copy { animation-delay: .4s; }
+            .tg .tg-lock { animation: tg-pop .6s cubic-bezier(.2,1.4,.4,1) .25s both; }
+            @keyframes tg-stitch { from { background-position: 0 0; } to { background-position: 0 18px; } }
+            @keyframes tg-pan    { from { background-position: center 30%; } to { background-position: center 62%; } }
+            @keyframes tg-float  { from { transform: translate(0,0) scale(1); } to { transform: translate(34px,-26px) scale(1.12); } }
+            @keyframes tg-pop    { from { opacity: 0; transform: scale(.6) rotate(-10deg); } to { opacity: 1; transform: none; } }
+            @keyframes tg-shake  { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-9px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+        }
     </style>
 </head>
 <body>
@@ -201,14 +336,22 @@
 <div class="tg">
     <!-- Left: photo + brand -->
     <aside class="tg-brand" aria-label="About TGMS">
+        <span class="tg-orb tg-orb-1" aria-hidden="true"></span>
+        <span class="tg-orb tg-orb-2" aria-hidden="true"></span>
         <div class="tg-mark">
             <b aria-hidden="true">TG</b>
             <span>TGMS<small>Textile &amp; Garment Management System</small></span>
         </div>
 
         <div class="tg-hero">
-            <h1>From fabric roll to finished garment, in one place.</h1>
+            <div class="tg-eyebrow"><i class="fas fa-circle" aria-hidden="true"></i> Internal company system</div>
+            <h1>From fabric roll to <em>finished garment</em>, in one place.</h1>
             <p>Track suppliers, stock, customer orders and production on the shop floor, and keep every team working from the same up-to-date picture.</p>
+            <div class="tg-chips" aria-label="Highlights">
+                <span><i class="fas fa-user-shield" aria-hidden="true"></i> Role-based access</span>
+                <span><i class="fas fa-lock" aria-hidden="true"></i> Secure sign-in</span>
+                <span><i class="fas fa-layer-group" aria-hidden="true"></i> Six connected modules</span>
+            </div>
         </div>
 
         <div>
@@ -226,9 +369,12 @@
 
     <!-- Right: sign in -->
     <main class="tg-panel">
-        <div class="tg-card">
+        <span class="tg-orb tg-orb-3" aria-hidden="true"></span>
+        <span class="tg-orb tg-orb-4" aria-hidden="true"></span>
+        <div class="tg-card" id="loginCard">
 
             <div class="tg-body">
+                <div class="tg-lock" aria-hidden="true"><i class="fas fa-shield-halved"></i></div>
                 <h2>Welcome back</h2>
                 <p class="sub">Sign in with your employee account to open your dashboard.</p>
 
@@ -252,6 +398,9 @@
                                 <i class="fas fa-eye" aria-hidden="true"></i>
                             </button>
                         </div>
+                        <div class="tg-caps hidden" id="capsHint" role="status">
+                            <i class="fas fa-triangle-exclamation" aria-hidden="true"></i> Caps Lock is on
+                        </div>
                     </div>
 
                     <button type="submit" id="loginBtn">
@@ -265,6 +414,8 @@
                 </div>
             </div>
         </div>
+
+        <div class="tg-copy"><i class="fas fa-scroll" aria-hidden="true"></i>TGMS · Textile &amp; Garment Management System</div>
 
     </main>
 </div>
@@ -281,6 +432,36 @@
             input.type = show ? 'text' : 'password';
             btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
             btn.firstElementChild.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+        });
+    })();
+</script>
+<script>
+    // Visual extras only (login logic stays in login.js)
+    (function () {
+        var pwd = document.getElementById('password');
+        var hint = document.getElementById('capsHint');
+        var card = document.getElementById('loginCard');
+        var alertBox = document.getElementById('loginAlert');
+
+        // Caps Lock warning while typing the password
+        function caps(e) {
+            if (!e.getModifierState) return;
+            hint.classList.toggle('hidden', !e.getModifierState('CapsLock'));
+        }
+        pwd.addEventListener('keydown', caps);
+        pwd.addEventListener('keyup', caps);
+        pwd.addEventListener('blur', function () { hint.classList.add('hidden'); });
+
+        // Gentle shake whenever an error message appears
+        new MutationObserver(function () {
+            if (!alertBox.classList.contains('hidden')) {
+                card.classList.remove('shake');
+                void card.offsetWidth;
+                card.classList.add('shake');
+            }
+        }).observe(alertBox, { attributes: true, attributeFilter: ['class'] });
+        card.addEventListener('animationend', function (e) {
+            if (e.animationName === 'tg-shake') card.classList.remove('shake');
         });
     })();
 </script>
