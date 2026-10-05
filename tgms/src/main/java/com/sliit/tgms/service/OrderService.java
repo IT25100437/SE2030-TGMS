@@ -8,6 +8,7 @@ import com.sliit.tgms.exception.ResourceNotFoundException;
 import com.sliit.tgms.model.*;
 import com.sliit.tgms.repository.InvoiceRepository;
 import com.sliit.tgms.repository.OrderRepository;
+import com.sliit.tgms.service.factory.OrderItemFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,15 +31,18 @@ public class OrderService {
     private final InvoiceRepository invoiceRepository;
     private final CustomerService customerService;
     private final InventoryService inventoryService;
+    private final OrderItemFactory orderItemFactory;
 
     public OrderService(OrderRepository orderRepository,
                          InvoiceRepository invoiceRepository,
                          CustomerService customerService,
-                         InventoryService inventoryService) {
+                         InventoryService inventoryService,
+                         OrderItemFactory orderItemFactory) {
         this.orderRepository = orderRepository;
         this.invoiceRepository = invoiceRepository;
         this.customerService = customerService;
         this.inventoryService = inventoryService;
+        this.orderItemFactory = orderItemFactory;
     }
 
     // PBI-11: Create a new customer order (starts life as DRAFT - not yet confirmed)
@@ -57,11 +61,8 @@ public class OrderService {
             // exist or has been soft-deleted (PBI-09), so we don't re-check that here.
             InventoryItem inventoryItem = inventoryService.getItemById(itemReq.getInventoryItemId());
 
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(order);
-            orderItem.setInventoryItem(inventoryItem);
-            orderItem.setQuantity(itemReq.getQuantity());
-            orderItem.setPrice(itemReq.getPrice());
+            // Factory Pattern: centralizes creation of OrderItem objects.
+            OrderItem orderItem = orderItemFactory.create(order, inventoryItem, itemReq);
             order.getItems().add(orderItem);
 
             total = total.add(itemReq.getPrice().multiply(BigDecimal.valueOf(itemReq.getQuantity())));

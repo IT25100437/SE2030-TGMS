@@ -6,6 +6,7 @@ import com.sliit.tgms.exception.BadRequestException;
 import com.sliit.tgms.exception.ResourceNotFoundException;
 import com.sliit.tgms.model.*;
 import com.sliit.tgms.repository.*;
+import com.sliit.tgms.service.reportstrategy.ReportStrategy;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -35,6 +36,7 @@ public class ReportsService {
     private final AttendanceRepository attendanceRepository;
     private final ReportScheduleRepository reportScheduleRepository;
     private final ReportPinRepository reportPinRepository;
+    private final List<ReportStrategy> reportStrategies;
 
     public ReportsService(SupplierRepository supplierRepository,
                           ContractRepository contractRepository,
@@ -46,7 +48,8 @@ public class ReportsService {
                           EmployeeRepository employeeRepository,
                           AttendanceRepository attendanceRepository,
                           ReportScheduleRepository reportScheduleRepository,
-                          ReportPinRepository reportPinRepository) {
+                          ReportPinRepository reportPinRepository,
+                          List<ReportStrategy> reportStrategies) {
         this.supplierRepository = supplierRepository;
         this.contractRepository = contractRepository;
         this.inventoryItemRepository = inventoryItemRepository;
@@ -58,6 +61,7 @@ public class ReportsService {
         this.attendanceRepository = attendanceRepository;
         this.reportScheduleRepository = reportScheduleRepository;
         this.reportPinRepository = reportPinRepository;
+        this.reportStrategies = reportStrategies;
     }
 
     private void validateReportType(String type) {
@@ -98,42 +102,13 @@ public class ReportsService {
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getReport(String type) {
         validateReportType(type);
-        return switch (type) {
-            case "ORDERS" -> orderRepository.findAll().stream().map(o -> {
-                Map<String,Object> r = new LinkedHashMap<>();
-                r.put("Order ID", o.getId());
-                r.put("Customer", o.getCustomer() != null ? o.getCustomer().getName() : "-");
-                r.put("Status", o.getStatus());
-                r.put("Order Date", o.getOrderDate());
-                r.put("Total", o.getTotalAmount());
-                r.put("Invoice", invoiceRepository.findByOrderId(o.getId()).map(i -> i.getAmount()).orElse(BigDecimal.ZERO));
-                return r;
-            }).toList();
-            case "INVENTORY" -> inventoryItemRepository.findAll().stream().map(i -> {
-                Map<String,Object> r = new LinkedHashMap<>();
-                r.put("SKU", i.getSku()); r.put("Item", i.getItemName()); r.put("Type", i.getType());
-                r.put("Quantity", i.getQuantity()); r.put("Threshold", i.getThreshold());
-                r.put("Location", i.getLocation()); r.put("Active", i.isActive()); return r;
-            }).toList();
-            case "PRODUCTION" -> workOrderRepository.findAll().stream().map(w -> {
-                Map<String,Object> r = new LinkedHashMap<>();
-                r.put("Work Order", w.getId()); r.put("Order", w.getOrder().getId());
-                r.put("Line", w.getAssignedLine()); r.put("Status", w.getStatus()); r.put("Created", w.getCreatedDate());
-                return r;
-            }).toList();
-            case "EMPLOYEES" -> employeeRepository.findAll().stream().map(e -> {
-                Map<String,Object> r = new LinkedHashMap<>();
-                r.put("Employee ID", e.getId()); r.put("Name", e.getName()); r.put("Department", e.getDepartment());
-                r.put("Role", e.getRole()); r.put("Status", e.getStatus()); return r;
-            }).toList();
-            case "SUPPLIERS" -> supplierRepository.findAll().stream().map(s -> {
-                Map<String,Object> r = new LinkedHashMap<>();
-                r.put("Supplier ID", s.getId()); r.put("Name", s.getName()); r.put("Contact", s.getContact());
-                r.put("Material Category", s.getMaterialCategory()); r.put("Status", s.getStatus());
-                r.put("Contracts", contractRepository.findBySupplierId(s.getId()).size()); return r;
-            }).toList();
-            default -> List.of();
-        };
+
+        // Strategy Pattern: each report type owns its own generation algorithm.
+        return reportStrategies.stream()
+                .filter(strategy -> strategy.getType().equals(type))
+                .findFirst()
+                .orElseThrow(() -> new BadRequestException("Invalid report type"))
+                .generate();
     }
 
     @Transactional(readOnly = true)

@@ -6,6 +6,7 @@ import com.sliit.tgms.exception.ResourceNotFoundException;
 import com.sliit.tgms.model.*;
 import com.sliit.tgms.repository.ProductionStageRepository;
 import com.sliit.tgms.repository.WorkOrderRepository;
+import com.sliit.tgms.service.strategy.ForwardOnlyProductionStageStrategy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,26 +29,19 @@ public class ProductionService {
     // A constant keeps this simple to find and explain in a demo.
     private static final long BOTTLENECK_THRESHOLD_HOURS = 48;
 
-    // PBI-18: the only forward-only path a work order may take, plus the cancel exception below.
-    private static final List<ProductionStageName> STAGE_ORDER = List.of(
-            ProductionStageName.PENDING,
-            ProductionStageName.CUTTING,
-            ProductionStageName.SEWING,
-            ProductionStageName.QC,
-            ProductionStageName.PACKING,
-            ProductionStageName.COMPLETED
-    );
-
     private final WorkOrderRepository workOrderRepository;
     private final ProductionStageRepository stageRepository;
     private final OrderService orderService;
+    private final ForwardOnlyProductionStageStrategy stageTransitionStrategy;
 
     public ProductionService(WorkOrderRepository workOrderRepository,
                              ProductionStageRepository stageRepository,
-                             OrderService orderService) {
+                             OrderService orderService,
+                             ForwardOnlyProductionStageStrategy stageTransitionStrategy) {
         this.workOrderRepository = workOrderRepository;
         this.stageRepository = stageRepository;
         this.orderService = orderService;
+        this.stageTransitionStrategy = stageTransitionStrategy;
     }
 
     // PBI-16 (+ PBI-17 embedded): create a work order from a confirmed customer order
@@ -131,11 +125,8 @@ public class ProductionService {
             );
         }
 
-        int currentIndex = STAGE_ORDER.indexOf(current);
-        int newIndex = STAGE_ORDER.indexOf(newStage);
-
-        if (newIndex <= currentIndex) {
-
+        // Strategy Pattern: transition rules are separated from production workflow.
+        if (!stageTransitionStrategy.canTransition(current, newStage)) {
             throw new BadRequestException(
                     "Cannot move from " + current
                             + " to " + newStage

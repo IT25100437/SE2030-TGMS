@@ -11,6 +11,7 @@ import com.sliit.tgms.model.StockMovement;
 import com.sliit.tgms.repository.InventoryItemRepository;
 import com.sliit.tgms.repository.OrderItemRepository;
 import com.sliit.tgms.repository.StockMovementRepository;
+import com.sliit.tgms.service.observer.InventoryEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,13 +24,16 @@ public class InventoryService {
     private final InventoryItemRepository itemRepository;
     private final StockMovementRepository movementRepository;
     private final OrderItemRepository orderItemRepository;
+    private final InventoryEventPublisher inventoryEventPublisher;
 
     public InventoryService(InventoryItemRepository itemRepository,
                             StockMovementRepository movementRepository,
-                            OrderItemRepository orderItemRepository) {
+                            OrderItemRepository orderItemRepository,
+                            InventoryEventPublisher inventoryEventPublisher) {
         this.itemRepository = itemRepository;
         this.movementRepository = movementRepository;
         this.orderItemRepository = orderItemRepository;
+        this.inventoryEventPublisher = inventoryEventPublisher;
     }
 
     // Add a new inventory item (raw material or finished good)
@@ -150,7 +154,13 @@ public class InventoryService {
         movement.setDirection(request.getDirection());
         movement.setNote(request.getNote());
 
-        return movementRepository.save(movement);
+        StockMovement savedMovement = movementRepository.save(movement);
+
+        // Observer Pattern: notify interested listeners without coupling this
+        // service to specific reactions such as low-stock alerts.
+        inventoryEventPublisher.notifyStockChanged(item, savedMovement);
+
+        return savedMovement;
     }
 
     public List<StockMovement> getMovementHistory(Long itemId) {

@@ -8,6 +8,10 @@ import com.sliit.tgms.model.Supplier;
 import com.sliit.tgms.model.SupplierStatus;
 import com.sliit.tgms.repository.ContractRepository;
 import com.sliit.tgms.repository.SupplierRepository;
+import com.sliit.tgms.service.strategy.AllSupplierSearchStrategy;
+import com.sliit.tgms.service.strategy.CategorySupplierSearchStrategy;
+import com.sliit.tgms.service.strategy.NameAndCategorySupplierSearchStrategy;
+import com.sliit.tgms.service.strategy.NameSupplierSearchStrategy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,10 +24,26 @@ public class SupplierService {
     private final SupplierRepository supplierRepository;
     private final ContractRepository contractRepository;
 
-    public SupplierService(SupplierRepository supplierRepository,
-                           ContractRepository contractRepository) {
+    private final AllSupplierSearchStrategy allSupplierSearchStrategy;
+    private final NameSupplierSearchStrategy nameSupplierSearchStrategy;
+    private final CategorySupplierSearchStrategy categorySupplierSearchStrategy;
+    private final NameAndCategorySupplierSearchStrategy nameAndCategorySupplierSearchStrategy;
+
+    public SupplierService(
+            SupplierRepository supplierRepository,
+            ContractRepository contractRepository,
+            AllSupplierSearchStrategy allSupplierSearchStrategy,
+            NameSupplierSearchStrategy nameSupplierSearchStrategy,
+            CategorySupplierSearchStrategy categorySupplierSearchStrategy,
+            NameAndCategorySupplierSearchStrategy nameAndCategorySupplierSearchStrategy) {
+
         this.supplierRepository = supplierRepository;
         this.contractRepository = contractRepository;
+        this.allSupplierSearchStrategy = allSupplierSearchStrategy;
+        this.nameSupplierSearchStrategy = nameSupplierSearchStrategy;
+        this.categorySupplierSearchStrategy = categorySupplierSearchStrategy;
+        this.nameAndCategorySupplierSearchStrategy =
+                nameAndCategorySupplierSearchStrategy;
     }
 
     // PBI-01: Register a new supplier
@@ -43,51 +63,55 @@ public class SupplierService {
     public Supplier getSupplierById(Long id) {
         return supplierRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Supplier not found with id: " + id));
+                        new ResourceNotFoundException(
+                                "Supplier not found with id: " + id));
     }
 
-    // NEW: Edit / update supplier details
+    // Edit / update supplier details
     public Supplier updateSupplier(Long id, SupplierRequest request) {
-
         Supplier supplier = getSupplierById(id);
 
         supplier.setName(request.getName());
         supplier.setContact(request.getContact());
         supplier.setMaterialCategory(request.getMaterialCategory());
 
-        // ID, status and createdAt are intentionally NOT changed.
-
         return supplierRepository.save(supplier);
     }
 
-    // PBI-03: Search & filter suppliers by material category
-    // and optionally by supplier name.
+    // PBI-03: Search & filter suppliers
+    // Strategy Pattern is used to select the search behavior.
     public List<Supplier> searchSuppliers(String category, String name) {
 
-        boolean hasCategory = category != null && !category.isBlank();
-        boolean hasName = name != null && !name.isBlank();
+        boolean hasCategory =
+                category != null && !category.isBlank();
+
+        boolean hasName =
+                name != null && !name.isBlank();
 
         if (hasCategory && hasName) {
-            return supplierRepository
-                    .findByNameContainingIgnoreCaseAndMaterialCategoryContainingIgnoreCase(
-                            name, category);
+            return nameAndCategorySupplierSearchStrategy
+                    .search(category, name);
+
         } else if (hasCategory) {
-            return supplierRepository
-                    .findByMaterialCategoryContainingIgnoreCase(category);
+            return categorySupplierSearchStrategy
+                    .search(category, name);
+
         } else if (hasName) {
-            return supplierRepository.findByNameContainingIgnoreCase(name);
+            return nameSupplierSearchStrategy
+                    .search(category, name);
         }
 
-        return supplierRepository.findAll();
+        return allSupplierSearchStrategy
+                .search(category, name);
     }
 
     // PBI-04: Deactivate supplier (soft delete)
     public Supplier deactivateSupplier(Long id) {
-
         Supplier supplier = getSupplierById(id);
 
         if (supplier.getStatus() == SupplierStatus.INACTIVE) {
-            throw new BadRequestException("Supplier is already inactive");
+            throw new BadRequestException(
+                    "Supplier is already inactive");
         }
 
         supplier.setStatus(SupplierStatus.INACTIVE);
@@ -95,18 +119,14 @@ public class SupplierService {
         return supplierRepository.save(supplier);
     }
 
-    // Permanent delete: physically removes the supplier row from SQL Server.
-    // This is separate from PBI-04 (deactivate), which only flips the status.
-    //
-    // contracts.supplier_id is a NOT NULL foreign key to suppliers, so the
-    // supplier's own contract rows must be removed first (same transaction),
-    // otherwise SQL Server rejects the delete with a foreign-key error.
+    // Permanent delete
     @Transactional
     public void permanentlyDeleteSupplier(Long id) {
+        Supplier supplier = getSupplierById(id);
 
-        Supplier supplier = getSupplierById(id); // 404 if missing
+        List<Contract> contracts =
+                contractRepository.findBySupplierId(id);
 
-        List<Contract> contracts = contractRepository.findBySupplierId(id);
         contractRepository.deleteAll(contracts);
         contractRepository.flush();
 
@@ -117,7 +137,8 @@ public class SupplierService {
     public byte[] exportSuppliersToCsv() {
 
         StringBuilder csv =
-                new StringBuilder("ID,Name,Contact,Material Category,Status\n");
+                new StringBuilder(
+                        "ID,Name,Contact,Material Category,Status\n");
 
         for (Supplier s : supplierRepository.findAll()) {
 
@@ -128,7 +149,8 @@ public class SupplierService {
                     .append(s.getStatus()).append('\n');
         }
 
-        return csv.toString().getBytes(StandardCharsets.UTF_8);
+        return csv.toString()
+                .getBytes(StandardCharsets.UTF_8);
     }
 
     private String escapeCsv(String value) {
@@ -138,7 +160,9 @@ public class SupplierService {
         }
 
         if (value.contains(",") || value.contains("\"")) {
-            return "\"" + value.replace("\"", "\"\"") + "\"";
+            return "\"" +
+                    value.replace("\"", "\"\"") +
+                    "\"";
         }
 
         return value;

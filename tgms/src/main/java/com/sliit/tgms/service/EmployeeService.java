@@ -10,6 +10,7 @@ import com.sliit.tgms.model.Employee;
 import com.sliit.tgms.model.EmployeeStatus;
 import com.sliit.tgms.repository.AttendanceRepository;
 import com.sliit.tgms.repository.EmployeeRepository;
+import com.sliit.tgms.service.decorator.EmployeeCreator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,20 +24,21 @@ public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final AttendanceRepository attendanceRepository;
+    private final EmployeeCreator employeeCreator;
 
-    public EmployeeService(EmployeeRepository employeeRepository, AttendanceRepository attendanceRepository) {
+    public EmployeeService(EmployeeRepository employeeRepository,
+                            AttendanceRepository attendanceRepository,
+                            EmployeeCreator employeeCreator) {
         this.employeeRepository = employeeRepository;
         this.attendanceRepository = attendanceRepository;
+        this.employeeCreator = employeeCreator;
     }
 
     // PBI-21: register a new employee
     public Employee registerEmployee(EmployeeRequest request) {
-        Employee employee = new Employee();
-        employee.setName(request.getName());
-        employee.setDob(request.getDob());
-        employee.setDepartment(request.getDepartment());
-        employee.setRole(request.getRole());
-        return employeeRepository.save(employee);
+        // Decorator Pattern: EmployeeAuditDecorator adds logging around the core
+        // employee creation operation without changing the core creator.
+        return employeeCreator.create(request);
     }
 
     public List<Employee> getAllActiveEmployees() {
