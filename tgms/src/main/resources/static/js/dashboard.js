@@ -664,27 +664,26 @@ function renderQuickActions(actions) {
         </a>`).join('');
 }
 
-function renderModuleCards(role) {
-    const modules = MODULE_CARDS.filter(m => m.roles.includes(role));
-    const box = document.getElementById('moduleLinks');
-    if (!modules.length) {
-        box.innerHTML = UI.emptyBlock({ icon: 'fa-th-large', compact: true, title: 'No modules assigned', text: 'No modules are assigned to your role yet.' });
-        return;
-    }
-    box.innerHTML = modules.map(m => `
-        <a href="${m.href}" class="module-link-card">
-            <div class="mlc-icon"><i class="fas ${m.icon}" aria-hidden="true"></i></div>
-            <div class="mlc-text"><strong>${escapeHtml(m.title)}</strong><span>${escapeHtml(m.desc)}</span></div>
-            <i class="fas fa-chevron-right mlc-chevron" aria-hidden="true"></i>
-        </a>`).join('');
-}
-
 function renderPanels(panels) {
     const box = document.getElementById('dashboardPanels');
+    if (!box) return;
     if (!panels.length) { box.innerHTML = ''; return; }
+
+    // Supplier Management: place Recent Supplier Activity
+    // and Contracts Ending Soon one below the other.
+    if (dashboardUser && dashboardUser.role === 'PROCUREMENT_OFFICER') {
+        box.innerHTML = panels
+            .map(panel => '<div class="dashboard-section dashboard-full">' + panel + '</div>')
+            .join('');
+        return;
+    }
+
+    // Keep the existing two-column layout for the other roles.
     let html = '';
     for (let i = 0; i < panels.length; i += 2) {
-        html += '<div class="dashboard-split dashboard-section">' + panels[i] + (panels[i + 1] || '') + '</div>';
+        html += '<div class="dashboard-split dashboard-section">' +
+            panels[i] + (panels[i + 1] || '') +
+            '</div>';
     }
     box.innerHTML = html;
 }
@@ -727,8 +726,6 @@ async function reloadDashboard() {
     document.getElementById('welcomeRole').textContent = formatRole(user.role);
 
     const config = ROLE_CONFIG[user.role];
-    renderModuleCards(user.role);
-
     if (!config) {
         document.getElementById('kpiGrid').classList.add('hidden');
         document.getElementById('quickActionsCard').classList.add('hidden');

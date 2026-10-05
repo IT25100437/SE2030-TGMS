@@ -74,7 +74,7 @@ function buildTopbar() {
             <button class="hamburger" id="sidebarToggle" aria-label="Toggle sidebar" aria-controls="sidebar">
                 <span></span><span></span><span></span>
             </button>
-            <div class="topbar-logo" aria-hidden="true">TG</div>
+            <div class="topbar-logo"><img src="/images/tgms-logo-yellow.png" alt="TGMS"></div>
         </div>
 
         <div class="topbar-search" role="search">
@@ -225,7 +225,7 @@ async function initLayout() {
     if (sidebar) {
         let html = `
             <div class="sidebar-brand">
-                <div class="sidebar-brand-logo" aria-hidden="true">TG</div>
+                <div class="sidebar-brand-logo"><img src="/images/tgms-logo-yellow.png" alt="TGMS"></div>
                 <div class="sidebar-brand-text">
                     <div class="sidebar-brand-name">TGMS</div>
                     <div class="sidebar-brand-tag">Textile &amp; Garment Management</div>
