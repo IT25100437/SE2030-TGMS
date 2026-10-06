@@ -1,3 +1,5 @@
+//Used when the user filters by material category.
+
 package com.sliit.tgms.service.strategy;
 
 import com.sliit.tgms.model.Supplier;

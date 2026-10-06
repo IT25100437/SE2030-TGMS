@@ -1,3 +1,5 @@
+//Used when there are no filters.
+
 package com.sliit.tgms.service.strategy;
 
 import com.sliit.tgms.model.Supplier;

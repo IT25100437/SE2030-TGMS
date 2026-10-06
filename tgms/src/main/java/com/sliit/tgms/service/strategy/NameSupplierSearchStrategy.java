@@ -1,3 +1,5 @@
+//Used when the user searches by supplier name.
+
 package com.sliit.tgms.service.strategy;
 
 import com.sliit.tgms.model.Supplier;

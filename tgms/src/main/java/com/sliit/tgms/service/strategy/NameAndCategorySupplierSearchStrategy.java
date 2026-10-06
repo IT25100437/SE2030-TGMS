@@ -1,3 +1,4 @@
+//Used when the user provides both.
 package com.sliit.tgms.service.strategy;
 
 import com.sliit.tgms.model.Supplier;
