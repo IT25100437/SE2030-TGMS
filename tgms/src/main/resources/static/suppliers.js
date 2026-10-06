@@ -43,9 +43,8 @@ function supplierRules(prefix) {
 
     return [
         { el: ids.name,     key: 'name',     label: 'Supplier name',     required: true, maxLength: 150 },
-        { el: ids.contact,  key: 'contact',  label: 'Contact (Phone Number)', required: true, type: 'phone',
-          message: 'Please enter a valid 10-digit phone number (e.g. 0771234567).',
-          custom: value => /^0\d{9}$/.test(value) ? null : 'Phone number must contain exactly 10 digits and start with 0.' },
+        { el: ids.contact,  key: 'contact',  label: 'Contact',           required: true, type: 'contact',
+          requiredMessage: 'Contact (phone number or email address) is required.' },
         { el: ids.category, key: 'materialCategory', label: 'Material category', required: true, maxLength: 100 }
     ];
 }
@@ -530,7 +529,7 @@ async function loadContracts() {
 
 
 // ============================================================
-// DELETE CONTRACT
+// EDIT CONTRACT
 // ============================================================
 
 async function deleteContract(contractId) {
@@ -546,8 +545,10 @@ async function deleteContract(contractId) {
     if (!confirmed) return;
 
     try {
-        await api.del(`/api/contracts/${contractId}`);
 
+        await api.delete(`/api/contracts/${contractId}`);
+
+        // If the deleted contract was being edited, reset the form.
         if (document.getElementById('c_contractId').value === String(contractId)) {
             resetContractForm();
         }
@@ -558,12 +559,9 @@ async function deleteContract(contractId) {
     } catch (err) {
         UI.error('Unable to delete contract. ' + err.message);
     }
+
 }
 
-
-// ============================================================
-// EDIT CONTRACT
-// ============================================================
 
 function editContract(contractId) {
 

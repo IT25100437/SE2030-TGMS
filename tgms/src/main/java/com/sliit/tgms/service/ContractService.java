@@ -51,6 +51,15 @@ public class ContractService {
         return contractRepository.findBySupplierId(supplierId);
     }
 
+    // Delete an existing contract
+    public void deleteContract(Long contractId) {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Contract not found with id: " + contractId));
+
+        contractRepository.delete(contract);
+    }
+
     private void validateDates(ContractRequest request) {
         if (request.getEndDate().isBefore(request.getStartDate())) {
             throw new BadRequestException("Contract end date cannot be before the start date");

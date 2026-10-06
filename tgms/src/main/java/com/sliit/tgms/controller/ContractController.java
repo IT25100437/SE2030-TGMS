@@ -44,4 +44,11 @@ public class ContractController {
             @PathVariable Long contractId, @Valid @RequestBody ContractRequest request) {
         return ResponseEntity.ok(contractService.updateContract(contractId, request));
     }
+
+    // Delete an existing contract
+    @DeleteMapping("/api/contracts/{contractId}")
+    public ResponseEntity<Void> deleteContract(@PathVariable Long contractId) {
+        contractService.deleteContract(contractId);
+        return ResponseEntity.noContent().build();
+    }
 }
